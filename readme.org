@@ -3,8 +3,6 @@
 #+LANGUAGE: es
 #+STARTUP:  showall
 
-lang: [[file:readme.org][en]]
-
 regexp3 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor][aqui]]
 regexp4 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][aqui]]
 
@@ -31,11 +29,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   - Colocacion de capturas especificas dentro de un arreglo
 
-  - Negacion de expreciones
-
   - Referencia dentro de la exprecion a capturas previas
-
-  - Soporte UTF8
 
 * Introduccion
 
@@ -66,9 +60,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
    El port al lenguaje de programacion Go surguio de la simple
    necesidad/curiosidad de aprender un poco mas. De momento es una burda
-   aproximacion con mas de *C* que de *Go*, carente de un diseño orientado a
-   objetos, con chapuzas varias... pero bueno, el repositorio debia tener un
-   inicio, no?
+   aproximacion con mas de *C* que de *Go*, con chapuzas varias... pero bueno,
+   el repositorio debia tener un inicio, no?
 
 ** Desarrollo y pruebas
 
@@ -108,26 +101,31 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     import "github.com/nasciiboy/regexp3"
   #+END_SRC
 
-  las funciones disponibles son
+  para utilizar la libreria debe crear un objeto de tipo =Re=, asi:
 
+  #+BEGIN_SRC go
+    var re regexp3.RE
+  #+END_SRC
+
+  las funciones disponibles son
 
   #+BEGIN_SRC go
     // busqueda, retorna numero de coincidencias
-    regexp3.Regexp3( txt, re string ) uint
+    re.Match( txt, re string ) uint
 
     // retorna numero de capturas
-    regexp3.TotCatch() uint32
+    re.TotCatch() uint32
 
     // retorna una captura por su indice
-    regexp3.GetCatch( index uint32 ) string
+    re.GetCatch( index uint32 ) string
 
     // Reemplaza el contenido de una captura por rplStr, por su id
     // regresa la cadena resultante
-    regexp3.RplCatch( rplStr string, id uint32 ) string
+    re.RplCatch( rplStr string, id uint32 ) string
 
     // Crea una cadena con las capturas y texto indicados en pText
     // regresa la cadena resultante
-    regexp3.PutCatch( pText string ) string
+    re.PutCatch( pText string ) string
   #+END_SRC
 
 ** funcion =regexp3()=
@@ -135,7 +133,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    Esta es la unica funcion de busqueda, aqui su prototipo:
 
    #+BEGIN_SRC go
-     regexp3.Regexp3( txt, re string ) uint
+     re.Match( txt, re string ) uint
    #+END_SRC
 
    - txt  :: cadena sobre la que efectuar la busqueda.
@@ -156,61 +154,61 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    - busqueda de texto en cualquier ubicacion:
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "Raptor" );
+       re.Match( "Raptor Test", "Raptor" );
      #+END_SRC
 
    - multiples opciones de busqueda "exp1|exp2"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "Dinosaur|T Rex|Raptor|Triceratops" );
+       re.Match( "Raptor Test", "Dinosaur|T Rex|Raptor|Triceratops" );
      #+END_SRC
 
    - coincidencia con cualquier caracter '.'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "R.ptor" );
+       re.Match( "Raptor Test", "R.ptor" );
      #+END_SRC
 
    - coincidencia cero o una ves '?'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "Ra?ptor" );
+       re.Match( "Raptor Test", "Ra?ptor" );
      #+END_SRC
 
    - coincidencia una o mas veces '+'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raaaptor Test", "Ra+ptor" );
+       re.Match( "Raaaptor Test", "Ra+ptor" );
      #+END_SRC
 
    - coincidencia cero o mas veces '*'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raaaptor Test", "Ra*ptor" );
+       re.Match( "Raaaptor Test", "Ra*ptor" );
      #+END_SRC
 
    - rango de coincidencias "{n1,n2}"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raaaptor Test", "Ra{0,100}ptor" );
+       re.Match( "Raaaptor Test", "Ra{0,100}ptor" );
      #+END_SRC
 
    - numero de coincidencias especifico '{n1}'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "Ra{1}ptor" );
+       re.Match( "Raptor Test", "Ra{1}ptor" );
      #+END_SRC
 
    - numero minimo de coincidencias '{n1,}'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raaaptor Test", "Ra{1,}ptor" );
+       re.Match( "Raaaptor Test", "Ra{1,}ptor" );
      #+END_SRC
 
    - Rango de caracteres "x-n"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "Ra-zptor" );
+       re.Match( "Raptor Test", "Ra-zptor" );
      #+END_SRC
 
      - NOTA :: Los rangos son validos en cualquier seccion de la regexp
@@ -227,67 +225,67 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      - Conjunto de caracteres "[abc]"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "R[uoiea]ptor" );
+         re.Match( "Raptor Test", "R[uoiea]ptor" );
        #+END_SRC
 
      - Rango dentro de un conjunto de caracteres "[x-n]"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "R[a-z]ptor" );
+         re.Match( "Raptor Test", "R[a-z]ptor" );
        #+END_SRC
 
      - inversion de conjunto de caracteres  "[^abc]"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "R[^uoie]ptor" );
+         re.Match( "Raptor Test", "R[^uoie]ptor" );
        #+END_SRC
 
    - coincidencia con un caracter que sea una letra ":a"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "RAptor Test", "R:aptor" );
+       re.Match( "RAptor Test", "R:aptor" );
      #+END_SRC
 
    - coincidencia con un caracter que no sea una letra ":A"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "R△ptor Test", "R:Aptor" );
+       re.Match( "R△ptor Test", "R:Aptor" );
      #+END_SRC
 
    - coincidencia con un caracter que sea una numero ":d"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "R4ptor Test", "R:dptor" );
+       re.Match( "R4ptor Test", "R:dptor" );
      #+END_SRC
 
    - coincidencia con un caracter que no sea un numero ":D"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "R:Dptor" );
+       re.Match( "Raptor Test", "R:Dptor" );
      #+END_SRC
 
    - coincidencia con un caracter alfanumerico ":w"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "R:wptor" );
+       re.Match( "Raptor Test", "R:wptor" );
      #+END_SRC
 
    - coincidencia con un caracter no alfanumerico ":W"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "R△ptor Test", "R:Wptor" );
+       re.Match( "R△ptor Test", "R:Wptor" );
      #+END_SRC
 
    - coincidencia con un caracter que sea un espacio ":s"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "R ptor Test", "R:sptor" );
+       re.Match( "R ptor Test", "R:sptor" );
      #+END_SRC
 
    - coincidencia con un caracter que no sea un espacio ":S"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "R:Sptor" );
+       re.Match( "Raptor Test", "R:Sptor" );
      #+END_SRC
 
    - escape de caracteres con significado especial ":caracter"
@@ -299,19 +297,19 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      que errores por violacion de segmento.
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( ":#()|<>", ":::#:(:):|:<:>" );
+       re.Match( ":#()|<>", ":::#:(:):|:<:>" );
      #+END_SRC
 
    - agrupacion "(exp)"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "(Raptor)" );
+       re.Match( "Raptor Test", "(Raptor)" );
      #+END_SRC
 
    - agrupacion con captura "<exp>"
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "<Raptor>" );
+       re.Match( "Raptor Test", "<Raptor>" );
      #+END_SRC
 
    - backreferences "@id"
@@ -321,7 +319,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      precidido por '@'
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "ae_ea", "<a><e>_@2@1" )
+       re.Match( "ae_ea", "<a><e>_@2@1" )
      #+END_SRC
 
    - *negacion de exprecion* "([^(exp)])" o "<[^(exp)]>"
@@ -337,7 +335,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      En esta sintaxis seria
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "a123456789b", "a([^(b)])*b" );
+       re.Match( "a123456789b", "a([^(b)])*b" );
      #+END_SRC
 
      esta sintaxis es provicional y no esta execta de fallos, no la tome
@@ -356,25 +354,25 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      - busqueda solo al inicio '#^exp'
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "#^Raptor" );
+         re.Match( "Raptor Test", "#^Raptor" );
        #+END_SRC
 
      - busqueda solo al final '#$exp'
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "#$Test" );
+         re.Match( "Raptor Test", "#$Test" );
        #+END_SRC
 
      - busqueda al inicio y final "#^$exp"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "#^$Raptor Test" );
+         re.Match( "Raptor Test", "#^$Raptor Test" );
        #+END_SRC
 
      - detener con la primer coincidencia "#?exp"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "#?Raptor Test" );
+         re.Match( "Raptor Test", "#?Raptor Test" );
        #+END_SRC
 
      - buscar por la cadena caracter a caracter "#~"
@@ -385,7 +383,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
        siempre sea caracter a caracter se utiliza este modificador
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "aaaaa", "#~a*" );
+         re.Match( "aaaaa", "#~a*" );
        #+END_SRC
 
        en este ejemplo, sin el modificador el resultado seria una coincidencia,
@@ -395,7 +393,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      - ignorar entre minusculas y mayusculas "#*exp"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "#*RaPtOr TeSt" );
+         re.Match( "Raptor Test", "#*RaPtOr TeSt" );
        #+END_SRC
 
 
@@ -403,7 +401,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      buscar
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "#^$*?~RaPtOr TeSt" );
+       re.Match( "Raptor Test", "#^$*?~RaPtOr TeSt" );
      #+END_SRC
 
      sin embargo los  modificadores  '~' y '?' pierden sentido debido a la
@@ -412,7 +410,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      una exprecion del tipo:
 
      #+BEGIN_SRC go
-       regexp3.Regexp3( "Raptor Test", "#$RaPtOr|#$TeSt" );
+       re.Match( "Raptor Test", "#$RaPtOr|#$TeSt" );
      #+END_SRC
 
      es erronea, el modificador despues del '|' se aplicaria la seccion entre
@@ -425,13 +423,13 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      - ignorar entre minusculas y mayusculas "exp#*"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "Raptor Test", "(RaPtOr)#* TeS#*t" );
+         re.Match( "Raptor Test", "(RaPtOr)#* TeS#*t" );
        #+END_SRC
 
      - no ignorar entre minusculas y mayusculas "exp#/"
 
        #+BEGIN_SRC go
-         regexp3.Regexp3( "RaPtOr TeSt", "#*(RaPtOr)#/ TES#/T" );
+         re.Match( "RaPtOr TeSt", "#*(RaPtOr)#/ TES#/T" );
        #+END_SRC
 
 ** Capturas
@@ -460,7 +458,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    de caracteres, aqui su prototipo:
 
    #+BEGIN_SRC go
-     regexp3.GetCatch( index uint32 ) string
+     re.GetCatch( index uint32 ) string
    #+END_SRC
 
    - index :: indice de la agrupacion (de =1= a =n=).
@@ -472,7 +470,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    para optener el numero capturadas dentro de una busqueda, utlice =TotCatch=:
 
    #+BEGIN_SRC go
-     regexp3.TotCatch() uint32
+     re.TotCatch() uint32
    #+END_SRC
 
    que regresa un valor de =0= a =n=.
@@ -491,7 +489,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 *** Colocar capturas dentro de una cadena
 
     #+BEGIN_SRC go
-      regexp3.PutCatch( pText string ) string
+      re.PutCatch( pText string ) string
     #+END_SRC
 
     el argumento =putStr= contiene el texto con el cual formar la nueva cadena
@@ -517,7 +515,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     texto, la funcion encargada de esta labor es =RplCatch=, su prototipo es:
 
     #+BEGIN_SRC go
-      regexp3.RplCatch( rplStr string, id uint32 ) string
+      re.RplCatch( rplStr string, id uint32 ) string
     #+END_SRC
 
     - rplStr :: texto de reemplazo para captura.
@@ -592,26 +590,26 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    utiles como ejemplos de uso, entre estos se encuentran los siguentes:
 
    #+BEGIN_SRC go
-     regexp3.Regexp3( "07-07-1777", "<0?[1-9]|[12][0-9]|3[01]><[/:-\\]><0?[1-9]|1[012]>@2<[12][0-9]{3}>" );
+     re.Match( "07-07-1777", "<0?[1-9]|[12][0-9]|3[01]><[/:-\\]><0?[1-9]|1[012]>@2<[12][0-9]{3}>" );
    #+END_SRC
 
    captura una cadena con formato de fecha, de forma separada dia, separador,
    mes y año. El separador tiene que coincider las dos ocaciones que aparece
 
    #+BEGIN_SRC go
-      regexp3.Regexp3( "https://en.wikipedia.org/wiki/Regular_expression", "(https?|ftp):://<[^:s/:<:>]+></[^:s:.:<:>,/]+>*<.>*" );
+      re.Match( "https://en.wikipedia.org/wiki/Regular_expression", "(https?|ftp):://<[^:s/:<:>]+></[^:s:.:<:>,/]+>*<.>*" );
    #+END_SRC
 
    capturar algo parecido a un enlace web
 
    #+BEGIN_SRC go
-     regexp3.Regexp3( "<mail>nasciiboy@gmail.com</mail>", "<[_A-Za-z0-9:-]+(:.[_A-Za-z0-9:-]+)*>:@<[A-Za-z0-9]+>:.<[A-Za-z0-9]+><:.[A-Za-z0-9]{2}>*" );
+     re.Match( "<mail>nasciiboy@gmail.com</mail>", "<[_A-Za-z0-9:-]+(:.[_A-Za-z0-9:-]+)*>:@<[A-Za-z0-9]+>:.<[A-Za-z0-9]+><:.[A-Za-z0-9]{2}>*" );
    #+END_SRC
 
    capturar por secciones (usuario,sitio,dominio) algo parecido a un correo.
 
    #+BEGIN_SRC go
-      regexp3.Regexp3( "aa0123aa", "<aa><[^(aa)]>*<aa>" );
+      re.Match( "aa0123aa", "<aa><[^(aa)]>*<aa>" );
    #+END_SRC
 
    capturar una cadena que contenga "aa", luego captura cualquier cosa que no
@@ -748,20 +746,15 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   2. Volver dinamico el numero de capturas
 
-  3. Hacer que la libreria tenga un enfoque orientado a objetos:
+  3. Agregar soporte de caracteres utf-8
 
-     Cada instancia sera independiente una de otra, contendra su propia regexp,
-     cadena de busqueda y capturas
+  4. Incluir la "negacion" de constructores
 
-  4. Soporte de caracteres utf-8
+  5. Pruebas de rendimiento
 
-  5. Incluir la "negacion" de constructores
+  6. Hacer un poco mas "funcional" algunas funciones
 
-  6. Pruebas de rendimiento
-
-  7. Hacer un poco mas "funcional" algunas funciones
-
-  8. Paralelizar la busqueda de rutas
+  7. Paralelizar la busqueda de rutas
 
 * Licencia
 

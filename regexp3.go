@@ -16,7 +16,7 @@ type TEXT struct {
   pos  int
 }
 
-var text TEXT
+var pText *TEXT
 
 type CATCH struct {
   init, end int
@@ -24,23 +24,36 @@ type CATCH struct {
 }
 
 const MAXCATCH = 16
-var   Catch [MAXCATCH]CATCH
-var   Cidx, Cindex uint32
+var   pCatch *[MAXCATCH]CATCH
+var   Cidx uint32
+var   pCindex *uint32
 
 const ( PATH = iota; GROUP; HOOK; SET; BACKREF; META; RANGEAB; POINT; SIMPLE )
 
-type RE struct {
+type reStruct struct {
   str                string
   kind               uint8
   mods               uint8
   loopsMin, loopsMax uint32
 }
 
-func Regexp3( txt, re string ) (result uint) {
-  rexp := RE{ re, PATH, 0, 0, 0 }
-  text.src = txt
-  Catch[0] = CATCH{ 0, len(txt), 0 }
-  Cindex = 1
+type RE struct {
+  Txt, Re string
+  result uint
+  text TEXT
+  catch[MAXCATCH] CATCH
+  catchIndex uint32
+}
+
+func (p *RE) Match( txt, re string ) (result uint) {
+  p.Txt, p.Re = txt, re
+  rexp := reStruct{ p.Re, PATH, 0, 0, 0 }
+  pText = &p.text
+  p.text.src = txt
+  p.catch[0] = CATCH{ 0, len(p.Txt), 0 }
+  pCatch = &p.catch
+  p.catchIndex = 1
+  pCindex = &p.catchIndex
 
   if len(txt) == 0 || len(rexp.str) == 0 { return 0 }
 
@@ -53,37 +66,37 @@ func Regexp3( txt, re string ) (result uint) {
   for forward, i := 0, 0; i < loops; i += forward {
     forward  = 1
     Cidx     = 1
-    text.pos = 0
-    text.init = i
-    text.len = len(txt[i:])
+    p.text.pos  = 0
+    p.text.init = i
+    p.text.len  = len(txt[i:])
 
 
     if walker(rexp) {
       if (rexp.mods & MOD_OMEGA) > 0 {
-        if text.pos == text.len { return 1
-        } else { Cindex = 1 }
+        if p.text.pos == p.text.len { return 1
+        } else { p.catchIndex = 1 }
       } else if (rexp.mods & MOD_LONLEY   ) > 0 { return 1
-      } else if (rexp.mods & MOD_FwrByChar) > 0 || text.pos == 0 { result++
-      } else {  forward = text.pos; result++; }
+      } else if (rexp.mods & MOD_FwrByChar) > 0 || p.text.pos == 0 { result++
+      } else {  forward = p.text.pos; result++; }
     }
   }
 
   return result
 }
 
-func walker( rexp RE ) bool {
-  var track RE
-  for oTpos, oCindex, oCidx := text.pos, Cindex, Cidx;
+func walker( rexp reStruct ) bool {
+  var track reStruct
+  for oTpos, oCindex, oCidx := pText.pos, *pCindex, Cidx;
       cutPath( &rexp, &track );
-      text.pos, Cindex, Cidx = oTpos, oCindex, oCidx {
+      pText.pos, *pCindex, Cidx = oTpos, oCindex, oCidx {
     if trekking(&track) { return true }
   }
 
   return false
 }
 
-func trekking( rexp *RE ) bool {
-  var track RE
+func trekking( rexp *reStruct ) bool {
+  var track reStruct
   for tracker( rexp, &track ) {
     if looper( &track ) == false { return false }
   }
@@ -91,7 +104,7 @@ func trekking( rexp *RE ) bool {
   return true
 }
 
-func looper(rexp *RE) bool {
+func looper(rexp *reStruct) bool {
   var loops uint32 = 0
 
   switch rexp.kind {
@@ -102,8 +115,8 @@ func looper(rexp *RE) bool {
   case GROUP, PATH:
     for loops < rexp.loopsMax && walker( *rexp ) { loops++; }
   case SET, BACKREF, META, RANGEAB, POINT, SIMPLE:
-    for forward := 0; loops < rexp.loopsMax && match( rexp, text.src[text.init + text.pos:], &forward ); {
-      text.pos += forward
+    for forward := 0; loops < rexp.loopsMax && match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
+      pText.pos += forward
       loops++;
     }
   }
@@ -112,7 +125,7 @@ func looper(rexp *RE) bool {
   return true
 }
 
-func tracker( rexp, track *RE ) bool {
+func tracker( rexp, track *reStruct ) bool {
   if len( rexp.str ) == 0 { return false }
 
   switch rexp.str[0] {
@@ -131,7 +144,7 @@ func tracker( rexp, track *RE ) bool {
   return true
 }
 
-func cutSimple( rexp, track *RE ) {
+func cutSimple( rexp, track *reStruct ) {
   for i, c := range rexp.str {
     switch c {
     case '(', '<', '[', '@', ':', '.':
@@ -148,14 +161,14 @@ func cutSimple( rexp, track *RE ) {
   cutByLen( rexp, track, len(rexp.str), SIMPLE  );
 }
 
-func cutByLen( rexp, track *RE, length int, kind uint8 ){
+func cutByLen( rexp, track *reStruct, length int, kind uint8 ){
   *track     = *rexp
   track.str  = rexp.str[:length]
   rexp.str   = rexp.str[length:]
   track.kind = kind;
 }
 
-func cutPath( rexp, track *RE ) bool {
+func cutPath( rexp, track *reStruct ) bool {
   if len(rexp.str) == 0 { return false }
 
   *track     = *rexp
@@ -176,7 +189,7 @@ func cutPath( rexp, track *RE ) bool {
   return true
 }
 
-func cutPair( rexp, track *RE, kind uint8 ){
+func cutPair( rexp, track *reStruct, kind uint8 ){
   *track       = *rexp;
   track.kind   = kind;
 
@@ -212,7 +225,7 @@ func walkMeta( str string, n *int ) int {
   return *n
 }
 
-func getMods( rexp, track *RE ){
+func getMods( rexp, track *reStruct ){
   if len( rexp.str ) > 0 && rexp.str[ 0 ] == '#' {
     for i, c := range( rexp.str[1:] ) {
       switch c {
@@ -230,7 +243,7 @@ func getMods( rexp, track *RE ){
   }
 }
 
-func getLoops( rexp, track *RE ){
+func getLoops( rexp, track *reStruct ){
   pos := 0;
   track.loopsMin, track.loopsMax = 1, 1
 
@@ -260,7 +273,7 @@ func getLoops( rexp, track *RE ){
   }
 }
 
-func match( rexp *RE, txt string, forward *int ) bool {
+func match( rexp *reStruct, txt string, forward *int ) bool {
   switch rexp.kind {
   case POINT  : return matchPoint  (  rexp, txt, forward )
   case SET    : return matchSet    ( *rexp, txt, forward )
@@ -271,7 +284,7 @@ func match( rexp *RE, txt string, forward *int ) bool {
   }
 }
 
-func matchPoint( rexp *RE, txt string, forward *int ) bool {
+func matchPoint( rexp *reStruct, txt string, forward *int ) bool {
   *forward = 0
 
   if len(txt) < len(rexp.str) { return false }
@@ -279,7 +292,7 @@ func matchPoint( rexp *RE, txt string, forward *int ) bool {
   return true
 }
 
-func matchText( rexp *RE, txt string, forward *int ) bool {
+func matchText( rexp *reStruct, txt string, forward *int ) bool {
   *forward = len(rexp.str)
 
   if len(txt) < *forward { return false }
@@ -292,7 +305,7 @@ func matchText( rexp *RE, txt string, forward *int ) bool {
   }
 }
 
-func matchRange( rexp *RE, txt string, forward *int ) bool {
+func matchRange( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
 
   *forward = 1
@@ -304,7 +317,7 @@ func matchRange( rexp *RE, txt string, forward *int ) bool {
   return txt[0] >= rexp.str[ 0 ] && txt[0] <= rexp.str[ 2 ];
 }
 
-func matchMeta( rexp *RE, txt string, forward *int ) bool {
+func matchMeta( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
   *forward = 1
 
@@ -322,7 +335,7 @@ func matchMeta( rexp *RE, txt string, forward *int ) bool {
   }
 }
 
-func matchSet( rexp RE, txt string, forward *int ) bool {
+func matchSet( rexp reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
 
   reverse := rexp.str[0] == '^'
@@ -330,7 +343,7 @@ func matchSet( rexp RE, txt string, forward *int ) bool {
   *forward = 1
 
   var result bool
-  var track RE
+  var track reStruct
   for tracker( &rexp, &track ) {
      switch track.kind {
      case GROUP:
@@ -339,9 +352,9 @@ func matchSet( rexp RE, txt string, forward *int ) bool {
              result = match( &track, txt, forward )
      default:
        if (track.mods & MOD_COMMUNISM)  > 0 {
-         result = findRuneCommunist( track.str, rune(text.src[ text.init + text.pos ] ) )
+         result = findRuneCommunist( track.str, rune(pText.src[ pText.init + pText.pos ] ) )
        } else {
-         result = strnchr( track.str, rune( text.src[ text.init + text.pos ]) )
+         result = strnchr( track.str, rune( pText.src[ pText.init + pText.pos ]) )
        }
      }
 
@@ -351,35 +364,35 @@ func matchSet( rexp RE, txt string, forward *int ) bool {
   return reverse
 }
 
-func matchBackRef( rexp *RE, txt string, forward *int ) bool {
+func matchBackRef( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
 
   backRefId    := aToi( rexp.str[1:] )
   backRefIndex := lastIdCatch( backRefId )
-  strCatch     := GetCatch( backRefIndex )
+  strCatch     := getCatch( backRefIndex )
   if strCatch == ""  ||
-     text.len - text.init + text.pos < int(len(strCatch)) ||
-     strCatch != text.src[text.init + text.pos:text.init + text.pos + len(strCatch)] {
+    len( txt ) < int(len(strCatch)) ||
+    strCatch != txt[:len(strCatch)] {
     return false;
   }
 
-  *forward = len(GetCatch( backRefIndex ))
+  *forward = len(getCatch( backRefIndex ))
   return true
 }
 
 func lastIdCatch( id uint32 ) uint32 {
-  for index := Cindex - 1; index > 0; index-- {
-    if Catch[ index ].id == id { return index }
+  for index := *pCindex - 1; index > 0; index-- {
+    if pCatch[ index ].id == id { return index }
   }
 
   return MAXCATCH;
 }
 
 func openCatch() (index uint32) {
-  if Cindex < MAXCATCH {
-    index = Cindex
-    Cindex++
-    Catch[index] = CATCH{ text.init + text.pos, text.init + text.pos, Cidx }
+  if *pCindex < MAXCATCH {
+    index = *pCindex
+    *pCindex++
+    pCatch[index] = CATCH{ pText.init + pText.pos, pText.init + pText.pos, Cidx }
     Cidx++
   } else { index = MAXCATCH }
 
@@ -388,46 +401,54 @@ func openCatch() (index uint32) {
 
 func closeCatch( index uint32 ){
   if index < MAXCATCH {
-    Catch[index].end = text.init + text.pos;
+    pCatch[index].end = pText.init + pText.pos;
   }
 }
 
-func TotCatch() uint32 { return Cindex - 1 }
-
-func GetCatch( index uint32 ) string {
-  if index > 0 && index < Cindex {
-    return text.src[ Catch[index].init : Catch[index].end ]
+func getCatch( index uint32 ) string {
+  if index > 0 && index < *pCindex {
+    return pText.src[ pCatch[index].init : pCatch[index].end ]
   }
 
   return ""
 }
 
-func RplCatch( rplStr string, id uint32 ) string {
+func (p *RE) TotCatch() uint32 { return p.catchIndex - 1 }
+
+func (p *RE) GetCatch( index uint32 ) string {
+  if index > 0 && index < p.catchIndex {
+    return p.Txt[ p.catch[index].init : p.catch[index].end ]
+  }
+
+  return ""
+}
+
+func (p *RE) RplCatch( rplStr string, id uint32 ) string {
   var result []byte
   last := 0
 
-  for index := uint32(1); index < Cindex; index++ {
-    if Catch[index].id == id {
-       for ; last < Catch[index].init; last++ {
-          result = append( result, text.src[ last ] )
+  for index := uint32(1); index < p.catchIndex; index++ {
+    if p.catch[index].id == id {
+       for ; last < p.catch[index].init; last++ {
+          result = append( result, p.Txt[ last ] )
        }
 
        for i := 0; i < len( rplStr ); i++ {
           result = append( result, rplStr[ i ] )
        }
 
-       last = Catch[index].end
+       last = p.catch[index].end
     }
   }
 
-  for ;last < len(text.src); last++ {
-    result = append( result, text.src[ last ] )
+  for ;last < len(p.Txt); last++ {
+    result = append( result, p.Txt[ last ] )
   }
 
   return string(result)
 }
 
-func PutCatch( pText string ) string {
+func (p *RE) PutCatch( pText string ) string {
   var result []byte
 
   for i := 0; i < len(pText); {
@@ -438,7 +459,7 @@ func PutCatch( pText string ) string {
         result = append( result, '#' );
       } else {
         num := aToi( pText[i:] )
-        ary := GetCatch( num )
+        ary := p.GetCatch( num )
         for c := 0; c < len(ary); c++ {
           result = append( result, ary[c] )
         }

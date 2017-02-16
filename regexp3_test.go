@@ -1,6 +1,6 @@
 //
 // Recursive Regexp Raptor (go version)
-// Available at http://github.com/nasciiboy/regexp3-go
+// Available at http://github.com/nasciiboy/regexp3
 //
 // Copyright © 2017 nasciiboy <nasciiboy@gmail.com>.
 // Distributed under the GNU GPL v3 License.
@@ -16,9 +16,16 @@ package regexp3
 import "testing"
 
 func TestRegexp3(t *testing.T) {
-  nTest := []struct {
-          txt, re string
-          n uint
+  nTest( t )
+  cTest( t )
+  sTest( t )
+  pTest( t )
+}
+
+func nTest( t *testing.T ){
+  numTest := []struct {
+    txt, re string
+    n uint
   }{
     { "a", "a", 1 },
     { "aa", "aa", 1 },
@@ -881,13 +888,17 @@ func TestRegexp3(t *testing.T) {
     { "012345678910012345678910", "<0><1><2><3><4><5><6><7><8><9><10>@1@2@3@4@5@6@7@8@9@10@11", 1 },
   }
 
-  for _, c := range nTest {
-    x := Regexp3( c.txt, c.re )
+  var re RE
+  for _, c := range numTest {
+    x := re.Match( c.txt, c.re )
+
     if x != c.n {
       t.Errorf( "Regexp3( \"%s\", \"%s\" ) == %d, want %d", c.txt, c.re, x, c.n )
     }
   }
+}
 
+func cTest( t *testing.T ){
   catchTest := []struct {
     txt, re string
     n uint32
@@ -962,16 +973,20 @@ func TestRegexp3(t *testing.T) {
     { "Rap Captor Fest", "#~<((C|R)ap C|C|R)(a+p{1}tor) ?((<T|F>+e)(st))>", 3, "Captor Fest" },
     { "012345678910109876501234", "<0><1><2><3><4><5><6><7><8><9><10><@11@10@9@8@7@6@1@2@3@4@5>", 12, "109876501234" },
   }
+
+  var re RE
   for _, c := range catchTest {
-    Regexp3( c.txt, c.re )
-    catch := GetCatch( c.n )
+    re.Match( c.txt, c.re )
+    catch := re.GetCatch( c.n )
     if catch != c.catch {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
                 "GetCatch( %d ) == %s, want %s",
                 c.txt, c.re, c.n, catch, c.catch )
     }
   }
+}
 
+func sTest( t *testing.T ){
   swapTest := []struct {
     txt, re string
     n uint32
@@ -1091,16 +1106,19 @@ func TestRegexp3(t *testing.T) {
     { "Raptor Raptors Raptoring", "<<<R>a>ptor>:w*", 2, "4", "4ptor 4ptors 4ptoring" },
   }
 
+  var re RE
   for _, c := range swapTest {
-    Regexp3( c.txt, c.re )
-    swap := RplCatch( c.swap, c.n )
+    re.Match( c.txt, c.re )
+    swap := re.RplCatch( c.swap, c.n )
     if swap != c.want {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
                 "RplCatch( %s, %d ) == %s, want %s",
                 c.txt, c.re, c.swap, c.n, swap, c.swap )
     }
   }
+}
 
+func pTest( t *testing.T ){
   putTest := []struct {
     txt, re string
     put, want string
@@ -1131,9 +1149,10 @@ func TestRegexp3(t *testing.T) {
     { "fecha: 07-07-1777", "<0?[1-9]|[12][0-9]|3[01]><[/:-\\]><0?[1-9]|1[012]>@2<[12][0-9]{3}>", "d:#1 m:#3 y:#4", "d:07 m:07 y:1777" },
   }
 
+  var re RE
   for _, c := range putTest {
-    Regexp3( c.txt, c.re )
-    put := PutCatch( c.put )
+    re.Match( c.txt, c.re )
+    put := re.PutCatch( c.put )
     if put != c.want {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
                 "PutCatch( %s ) == %s, want %s",
