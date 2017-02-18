@@ -130,9 +130,9 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     re.PutCatch( pText string ) string
   #+END_SRC
 
-** funcion =regexp3()=
+** Metodo =Match()=
 
-   Esta es la unica funcion de busqueda, aqui su prototipo:
+   Esta es el unico metodo de busqueda, aqui su prototipo:
 
    #+BEGIN_SRC go
      re.Match( txt, re string ) uint
@@ -451,8 +451,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      coincidencia uno         coincidencia dos         coincidencia tres
    #+END_EXAMPLE
 
-   la funcion =cpytCatch= hace una copia de una la captura dentro de un arreglo
-   de caracteres, aqui su prototipo:
+   El metodo =GetCatch= hace una copia de una la captura dentro de =string=,
+   aqui su prototipo:
 
    #+BEGIN_SRC go
      re.GetCatch( index uint32 ) string
@@ -462,7 +462,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
 
    la funcion regeresa una cadena con la copia del contenido de la captura. Un
-   indice incorrecto regresara una cadena vacia.
+   indice incorrecto regresara un =string= vacio.
 
    para optener el numero capturadas dentro de una busqueda, utlice =TotCatch=:
 
@@ -476,9 +476,9 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    una funcion como esta:
 
    #+BEGIN_SRC go
-     func printCatch(){
-       for i := uint32(1); i <= TotCatch(); i++ {
-         fmt.Printf( "[%d] >%s<\n", i, GetCatch( i ) )
+     func printCatch( re regexp3.RE ){
+       for i := uint32(1); i <= re.TotCatch(); i++ {
+         fmt.Printf( "[%d] >%s<\n", i, re.GetCatch( i ) )
        }
      }
    #+END_SRC
@@ -490,9 +490,9 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     #+END_SRC
 
     el argumento =putStr= contiene el texto con el cual formar la nueva cadena
-    asi como indicadores de cuales capturas colocar. Para indicar la insercion
-    de una captura coloque el signo '#' seguido del indice de captura. por ejemplo
-    el argumento =putStr= podria ser
+    (=string=) asi como indicadores de cuales capturas colocar. Para indicar la
+    insercion de una captura coloque el signo '#' seguido del indice de
+    captura. por ejemplo el argumento =putStr= podria ser
 
     #+BEGIN_SRC go
       pText := "captura 1 >>#1<< captura 2 >>#2<< captura 747 >>#747<<"
@@ -509,7 +509,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
     El reemplazo opera sobre un arreglo de caracteres en el cual se coloca el
     texto de busqueda modificando una captura especifica por una cadena de
-    texto, la funcion encargada de esta labor es =RplCatch=, su prototipo es:
+    texto, el metodo encargado de esta labor es =RplCatch=, su prototipo es:
 
     #+BEGIN_SRC go
       re.RplCatch( rplStr string, id uint32 ) string
@@ -745,13 +745,11 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   3. Agregar soporte de caracteres utf-8
 
-  4. Incluir la "negacion" de constructores
+  4. Pruebas de rendimiento
 
-  5. Pruebas de rendimiento
+  5. Hacer un poco mas "funcional" algunas funciones
 
-  6. Hacer un poco mas "funcional" algunas funciones
-
-  7. Paralelizar la busqueda de rutas
+  6. Paralelizar la busqueda de rutas
 
 * Licencia
 
