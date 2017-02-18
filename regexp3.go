@@ -8,6 +8,8 @@ const MOD_LONLEY     = 4
 const MOD_FwrByChar  = 8
 const MOD_COMMUNISM  = 16
 const MOD_CAPITALISM = 0xEF
+const MOD_NEGATIVE   = 128
+const MOD_POSITIVE   = 0x7F
 
 type TEXT struct {
   src string
@@ -46,14 +48,13 @@ type RE struct {
 }
 
 func (p *RE) Match( txt, re string ) (result uint) {
-  p.Txt, p.Re = txt, re
-  rexp := reStruct{ p.Re, PATH, 0, 0, 0 }
-  pText = &p.text
-  p.text.src = txt
-  p.catch[0] = CATCH{ 0, len(p.Txt), 0 }
-  pCatch = &p.catch
+  p.Txt, p.Re  = txt, re
+  rexp        := reStruct{ p.Re, PATH, 0, 0, 0 }
+  pText        = &p.text
+  p.text.src   = txt
+  pCatch       = &p.catch
   p.catchIndex = 1
-  pCindex = &p.catchIndex
+  pCindex      = &p.catchIndex
 
   if len(txt) == 0 || len(rexp.str) == 0 { return 0 }
 
@@ -73,11 +74,11 @@ func (p *RE) Match( txt, re string ) (result uint) {
 
     if walker(rexp) {
       if (rexp.mods & MOD_OMEGA) > 0 {
-        if p.text.pos == p.text.len { return 1
+        if p.text.pos == p.text.len {                                return 1
         } else { p.catchIndex = 1 }
-      } else if (rexp.mods & MOD_LONLEY   ) > 0 { return 1
+      } else if (rexp.mods & MOD_LONLEY   ) > 0 {                    return 1
       } else if (rexp.mods & MOD_FwrByChar) > 0 || p.text.pos == 0 { result++
-      } else {  forward = p.text.pos; result++; }
+      } else {   forward = p.text.pos;                               result++; }
     }
   }
 
@@ -97,25 +98,41 @@ func walker( rexp reStruct ) bool {
 
 func trekking( rexp *reStruct ) bool {
   var track reStruct
+  var result bool
   for tracker( rexp, &track ) {
-    if looper( &track ) == false { return false }
+    switch track.kind {
+    case HOOK:
+      iCatch := openCatch();
+      result = loopGroup( &track )
+      if result { closeCatch( iCatch ) }
+    case GROUP, PATH:
+      result = loopGroup( &track )
+    case SET:
+      if track.str[0] == '^' {
+        track.str = track.str[1:]
+        if (track.mods & MOD_NEGATIVE) > 0 { track.mods &=  MOD_POSITIVE
+        } else                             { track.mods |=  MOD_NEGATIVE }
+      }
+      fallthrough
+    case BACKREF, META, RANGEAB, POINT, SIMPLE:
+      result = looper( &track )
+    }
+    if result == false { return false }
   }
 
   return true
 }
 
-func looper(rexp *reStruct) bool {
+func looper( rexp *reStruct ) bool {
   var loops uint32 = 0
 
-  switch rexp.kind {
-  case HOOK:
-    iCatch := openCatch();
-    for loops < rexp.loopsMax && walker( *rexp ) { loops++; }
-    if loops >= rexp.loopsMin { closeCatch( iCatch ) }
-  case GROUP, PATH:
-    for loops < rexp.loopsMax && walker( *rexp ) { loops++; }
-  case SET, BACKREF, META, RANGEAB, POINT, SIMPLE:
-    for forward := 0; loops < rexp.loopsMax && match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
+  if (rexp.mods & MOD_NEGATIVE) > 0 {
+    for forward := 0; loops < rexp.loopsMax && (pText.pos < pText.len) && !match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
+      pText.pos += 1;
+      loops++;
+    }
+  } else {
+    for forward := 0; loops < rexp.loopsMax && (pText.pos < pText.len) && match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
       pText.pos += forward
       loops++;
     }
@@ -124,6 +141,28 @@ func looper(rexp *reStruct) bool {
   if loops < rexp.loopsMin { return false }
   return true
 }
+
+func loopGroup( rexp *reStruct ) bool {
+  loops, textPos := uint32(0), pText.pos;
+
+  if (rexp.mods & MOD_NEGATIVE) > 0 {
+    for loops < rexp.loopsMax && !walker( *rexp ) {
+      textPos++;
+      pText.pos = textPos;
+      loops++;
+    }
+
+    pText.pos = textPos;
+  } else {
+    for loops < rexp.loopsMax && walker( *rexp ) {
+      loops++;
+    }
+  }
+
+  if loops < rexp.loopsMin { return false  }
+  return true
+}
+
 
 func tracker( rexp, track *reStruct ) bool {
   if len( rexp.str ) == 0 { return false }
@@ -149,11 +188,9 @@ func cutSimple( rexp, track *reStruct ) {
     switch c {
     case '(', '<', '[', '@', ':', '.':
       cutByLen( rexp, track, i, SIMPLE  ); return
-    case '?', '+', '*', '{', '-', '#':
-      if( i == 1 ){
-        if c == '-' { cutByLen( rexp, track,     3, RANGEAB );
-        } else      { cutByLen( rexp, track,     1, SIMPLE  ); }
-      } else        { cutByLen( rexp, track, i - 1, SIMPLE  ); }
+    case '?', '+', '*', '{', '#':
+      if i == 1 { cutByLen( rexp, track,     1, SIMPLE  )
+      } else    { cutByLen( rexp, track, i - 1, SIMPLE  ) }
       return
     }
   }
@@ -226,6 +263,8 @@ func walkMeta( str string, n *int ) int {
 }
 
 func getMods( rexp, track *reStruct ){
+  track.mods &= MOD_POSITIVE
+
   if len( rexp.str ) > 0 && rexp.str[ 0 ] == '#' {
     for i, c := range( rexp.str[1:] ) {
       switch c {
@@ -235,6 +274,7 @@ func getMods( rexp, track *reStruct ){
       case '~': track.mods |=  MOD_FwrByChar
       case '*': track.mods |=  MOD_COMMUNISM
       case '/': track.mods &=  MOD_CAPITALISM
+      case '!': track.mods |=  MOD_NEGATIVE
       default : rexp.str = rexp.str[i+1:]; return
       }
     }
@@ -338,30 +378,52 @@ func matchMeta( rexp *reStruct, txt string, forward *int ) bool {
 func matchSet( rexp reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
 
-  reverse := rexp.str[0] == '^'
-  if reverse { rexp.str = rexp.str[1:] }
   *forward = 1
 
   var result bool
   var track reStruct
-  for tracker( &rexp, &track ) {
-     switch track.kind {
-     case GROUP:
-             result = walker( track );
-     case RANGEAB,  META, POINT:
-             result = match( &track, txt, forward )
-     default:
-       if (track.mods & MOD_COMMUNISM)  > 0 {
-         result = findRuneCommunist( track.str, rune(pText.src[ pText.init + pText.pos ] ) )
-       } else {
-         result = strnchr( track.str, rune( pText.src[ pText.init + pText.pos ]) )
-       }
-     }
+  for trackerSet( &rexp, &track ) {
+    track.mods &=  MOD_POSITIVE
 
-    if result { return !reverse }
+    switch track.kind {
+    case RANGEAB,  META:
+      result = match( &track, txt, forward )
+    default:
+      if (track.mods & MOD_COMMUNISM)  > 0 {
+        result = findRuneCommunist( track.str, rune(pText.src[ pText.init + pText.pos ] ) )
+      } else {
+        result = strnchr( track.str, rune( pText.src[ pText.init + pText.pos ]) )
+      }
+    }
+
+    if result { return true }
   }
 
-  return reverse
+  return false
+}
+
+func trackerSet( rexp, track *reStruct ) bool {
+  if len( rexp.str ) == 0 { return false }
+
+  if rexp.str[0] == ':' { cutByLen ( rexp, track, 2, META  )
+  } else {
+    for i := 0; i < len( rexp.str ); i++ {
+      switch rexp.str[i] {
+      case ':': cutByLen( rexp, track, i, SIMPLE  ); goto setL;
+      case '-':
+        if i == 1 { cutByLen( rexp, track,     3, RANGEAB )
+        } else    { cutByLen( rexp, track, i - 1, SIMPLE  ) }
+
+        goto setL;
+      }
+    }
+
+    cutByLen( rexp, track, len( rexp.str ), SIMPLE  );
+  }
+
+ setL:
+  track.loopsMin, track.loopsMax = 1, 1
+  return true
 }
 
 func matchBackRef( rexp *reStruct, txt string, forward *int ) bool {

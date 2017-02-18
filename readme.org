@@ -31,6 +31,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   - Referencia dentro de la exprecion a capturas previas
 
+  - Negacion de expreciones (experimental)
+
 * Introduccion
 
   *Recurseve Regexp Raptor* es una libreria de busqueda, captura y reemplazo de
@@ -107,7 +109,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     var re regexp3.RE
   #+END_SRC
 
-  las funciones disponibles son
+  las metodos disponibles son
 
   #+BEGIN_SRC go
     // busqueda, retorna numero de coincidencias
@@ -205,22 +207,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
        re.Match( "Raaaptor Test", "Ra{1,}ptor" );
      #+END_SRC
 
-   - Rango de caracteres "x-n"
-
-     #+BEGIN_SRC go
-       re.Match( "Raptor Test", "Ra-zptor" );
-     #+END_SRC
-
-     - NOTA :: Los rangos son validos en cualquier seccion de la regexp
-               (agrupacion, conjunto de caracteres, capturas, texto simple).
-
-     - NOTA :: Solo estan soportados rangos de caracteres ASCII
-
    - Conjuntos.
-
-     - advertencia :: Los conjuntos de caracteres interpretan todos las signos
-       especiales utilizados por la libreria (agrupacion, conjunto, repeticion,
-       modificadores...) escape dichos signos colocando antes el signo ':'
 
      - Conjunto de caracteres "[abc]"
 
@@ -228,10 +215,16 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
          re.Match( "Raptor Test", "R[uoiea]ptor" );
        #+END_SRC
 
-     - Rango dentro de un conjunto de caracteres "[x-n]"
+     - Rango dentro de un conjunto de caracteres "[a-b]"
 
        #+BEGIN_SRC go
          re.Match( "Raptor Test", "R[a-z]ptor" );
+       #+END_SRC
+
+     - Metacaracter dentro de un conjunto de caracteres "[:meta]"
+
+       #+BEGIN_SRC go
+         re.Match( "Raptor Test", "R[:w]ptor" );
        #+END_SRC
 
      - inversion de conjunto de caracteres  "[^abc]"
@@ -294,10 +287,17 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      '-', '#' y '@' indican como debe procesarse la exprecion regular, colocar
      alguno de estos caracteres tal cual, sin tener en cuenta una correcta
      sintaxis dentro de la exprecion, puede generar bucles infinitos al igual
-     que errores por violacion de segmento.
+     que errores por acceso a elementos fuera del limite de un =slice=.
 
      #+BEGIN_SRC go
        re.Match( ":#()|<>", ":::#:(:):|:<:>" );
+     #+END_SRC
+
+     los caracteres /especiales/ (exepto el metacarater =:=) pierden su
+     significado detro de un conjunto
+
+     #+BEGIN_SRC go
+       re.Match( "()<>[]|{}*#@?+", "[()<>:[:]|{}*?+#@]" );
      #+END_SRC
 
    - agrupacion "(exp)"
@@ -321,25 +321,6 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      #+BEGIN_SRC go
        re.Match( "ae_ea", "<a><e>_@2@1" )
      #+END_SRC
-
-   - *negacion de exprecion* "([^(exp)])" o "<[^(exp)]>"
-
-     esta poco convencional exprecion permite el equivalente en otras librerias
-     a expreciones tipo
-
-     #+BEGIN_SRC go
-       a.*b
-     #+END_SRC
-
-     es decir "una 'a' seguida por cualquier cosa que no sea b, seguida por b".
-     En esta sintaxis seria
-
-     #+BEGIN_SRC go
-       re.Match( "a123456789b", "a([^(b)])*b" );
-     #+END_SRC
-
-     esta sintaxis es provicional y no esta execta de fallos, no la tome
-     enserio.
 
    - modificadores de comportamiento
 
@@ -430,6 +411,22 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
        #+BEGIN_SRC go
          re.Match( "RaPtOr TeSt", "#*(RaPtOr)#/ TES#/T" );
+       #+END_SRC
+
+     - *negacion de exprecion* "exp#!"
+
+       esta poco convencional exprecion permite el equivalente en otras
+       librerias a expreciones tipo
+
+       #+BEGIN_SRC go
+         xx.*yy
+       #+END_SRC
+
+       es decir "xx" seguida por cualquier cosa que no sea "yy", seguida por "yy".
+       En esta sintaxis seria
+
+       #+BEGIN_SRC go
+         re.Match( "xx123456789yy", "xx(yy)*#!yy" );
        #+END_SRC
 
 ** Capturas
@@ -586,7 +583,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
 ** algunos ejemplos de uso
 
-   El fichero =ascii_test.c= contiene una amplia variedad de pruebas que son
+   El fichero =regexp3_test.go= contiene una amplia variedad de pruebas que son
    utiles como ejemplos de uso, entre estos se encuentran los siguentes:
 
    #+BEGIN_SRC go
@@ -609,11 +606,11 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    capturar por secciones (usuario,sitio,dominio) algo parecido a un correo.
 
    #+BEGIN_SRC go
-      re.Match( "aa0123aa", "<aa><[^(aa)]>*<aa>" );
+      re.Match( "xx0123yy", "<xx><yy>*#!<yy>" );
    #+END_SRC
 
-   capturar una cadena que contenga "aa", luego captura cualquier cosa que no
-   sea "aa" y finalmente captura nuevamente "aa"
+   capturar una cadena que contenga "xx", luego captura cualquier cosa que no
+   sea "yy" y finalmente captura nuevamente "yy"
 
 * Hacking
 ** algoritmo
