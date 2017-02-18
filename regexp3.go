@@ -98,15 +98,14 @@ func walker( rexp reStruct ) bool {
 
 func trekking( rexp *reStruct ) bool {
   var track reStruct
-  var result bool
-  for tracker( rexp, &track ) {
+  for result := false; tracker( rexp, &track ); {
     switch track.kind {
     case HOOK:
       iCatch := openCatch();
-      result = loopGroup( &track )
+      result  = loopGroup( &track )
       if result { closeCatch( iCatch ) }
     case GROUP, PATH:
-      result = loopGroup( &track )
+      result  = loopGroup( &track )
     case SET:
       if track.str[0] == '^' {
         track.str = track.str[1:]
@@ -117,6 +116,7 @@ func trekking( rexp *reStruct ) bool {
     case BACKREF, META, RANGEAB, POINT, SIMPLE:
       result = looper( &track )
     }
+
     if result == false { return false }
   }
 
@@ -383,8 +383,6 @@ func matchSet( rexp reStruct, txt string, forward *int ) bool {
   var result bool
   var track reStruct
   for trackerSet( &rexp, &track ) {
-    track.mods &=  MOD_POSITIVE
-
     switch track.kind {
     case RANGEAB,  META:
       result = match( &track, txt, forward )
@@ -510,24 +508,24 @@ func (p *RE) RplCatch( rplStr string, id uint32 ) string {
   return string(result)
 }
 
-func (p *RE) PutCatch( pText string ) string {
+func (p *RE) PutCatch( pStr string ) string {
   var result []byte
 
-  for i := 0; i < len(pText); {
-    if pText[i] == '#' {
+  for i := 0; i < len(pStr); {
+    if pStr[i] == '#' {
       i++
-      if len(pText[i:]) > 0 && pText[i] == '#' {
+      if len(pStr[i:]) > 0 && pStr[i] == '#' {
         i++
         result = append( result, '#' );
       } else {
-        num := aToi( pText[i:] )
+        num := aToi( pStr[i:] )
         ary := p.GetCatch( num )
         for c := 0; c < len(ary); c++ {
           result = append( result, ary[c] )
         }
-        i += countCharDigits( pText[i:] )
+        i += countCharDigits( pStr[i:] )
       }
-    } else { result = append( result, pText[i] ); i++ }
+    } else { result = append( result, pStr[i] ); i++ }
   }
 
   return string(result)

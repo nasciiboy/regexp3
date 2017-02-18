@@ -498,13 +498,13 @@ func nTest( t *testing.T ){
     { "1a2b3c4d5e6f", "[123][abcdef]", 3 },
     { ".b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b", "[:.]",  20 },
     { ".b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b", "[:.b]",  40 },
+    { ".b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b", "[.]",  20 },
+    { ".b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b", "[.b]",  40 },
     { "abababababababababababababababababababab", "(a[ab])" , 20 },
     { "abababababababababababababababababababab", "([ab]a)" , 19 },
     { "abababababababababababababababababababab", "(:a[ab])" , 20 },
     { "abababababababababababababababababababab", "([ab]:a)" , 20 },
     { "abababababababababababababababababababab", "([ab]{5}:a{5})" , 4 },
-    { "()<>[]{}*?+", "[:(:):<:>:[:]:{:}:*:?:+]", 11 },
-    { ")>}", "[)>}]", 3 },
 
     { "",  "[^a]",  0 },
     { "a", "[^1]",  1 },
@@ -943,7 +943,7 @@ func nTest( t *testing.T ){
     x := re.Match( c.txt, c.re )
 
     if x != c.n {
-      t.Errorf( "Regexp3( \"%s\", \"%s\" ) == %d, want %d", c.txt, c.re, x, c.n )
+      t.Errorf( "Regexp3( \"%s\", \"%s\" ) == %d, expected %d", c.txt, c.re, x, c.n )
     }
   }
 }
@@ -1032,7 +1032,7 @@ func cTest( t *testing.T ){
     catch := re.GetCatch( c.n )
     if catch != c.catch {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "GetCatch( %d ) == %s, want %s",
+                "GetCatch( %d ) == %s, expected %s",
                 c.txt, c.re, c.n, catch, c.catch )
     }
   }
@@ -1042,7 +1042,7 @@ func sTest( t *testing.T ){
   swapTest := []struct {
     txt, re string
     n uint32
-    swap, want string
+    swap, expected string
   }{
     { "aaab", "<a>"   , 1, "e", "eeeb" },
     { "a", "<a>"   , 1, "", "" },
@@ -1162,9 +1162,9 @@ func sTest( t *testing.T ){
   for _, c := range swapTest {
     re.Match( c.txt, c.re )
     swap := re.RplCatch( c.swap, c.n )
-    if swap != c.want {
+    if swap != c.expected {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "RplCatch( %s, %d ) == %s, want %s",
+                "RplCatch( %s, %d ) == %s, expected %s",
                 c.txt, c.re, c.swap, c.n, swap, c.swap )
     }
   }
@@ -1173,7 +1173,7 @@ func sTest( t *testing.T ){
 func pTest( t *testing.T ){
   putTest := []struct {
     txt, re string
-    put, want string
+    put, expected string
   }{
     { "a", "<a>", "#1", "a" },
     { "a", "<a>", "#x", "x" },
@@ -1227,10 +1227,10 @@ func pTest( t *testing.T ){
   for _, c := range putTest {
     re.Match( c.txt, c.re )
     put := re.PutCatch( c.put )
-    if put != c.want {
+    if put != c.expected {
       t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "PutCatch( %s ) == %s, want %s",
-                c.txt, c.re, c.put, put, c.want )
+                "PutCatch( %s ) == %s, expected %s",
+                c.txt, c.re, c.put, put, c.expected )
     }
   }
 }

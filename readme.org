@@ -103,7 +103,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     import "github.com/nasciiboy/regexp3"
   #+END_SRC
 
-  para utilizar la libreria debe crear un objeto de tipo =Re=, asi:
+  para utilizar la libreria debe crear un objeto de tipo =RE=, asi:
 
   #+BEGIN_SRC go
     var re regexp3.RE
@@ -394,8 +394,9 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
        re.Match( "Raptor Test", "#$RaPtOr|#$TeSt" );
      #+END_SRC
 
-     es erronea, el modificador despues del '|' se aplicaria la seccion entre
-     '|' y '#', es decir cero, con un retorno de erroneo
+     es erronea, el modificador despues del operador '|' se aplicaria a la
+     seccion entre '|' y '#', es decir a una cadena vacia, lo que proboca un
+     retorno incorrecto
 
      los modificadores locales se colocan despues del indicador de repeticion
      (de existir) y afectan la misma region que afectan los indicadores de
@@ -486,16 +487,16 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 *** Colocar capturas dentro de una cadena
 
     #+BEGIN_SRC go
-      re.PutCatch( pText string ) string
+      re.PutCatch( pStr string ) string
     #+END_SRC
 
-    el argumento =putStr= contiene el texto con el cual formar la nueva cadena
+    el argumento =pStr= contiene el texto con el cual formar la nueva cadena
     (=string=) asi como indicadores de cuales capturas colocar. Para indicar la
     insercion de una captura coloque el signo '#' seguido del indice de
-    captura. por ejemplo el argumento =putStr= podria ser
+    captura. por ejemplo el argumento =pStr= podria ser
 
     #+BEGIN_SRC go
-      pText := "captura 1 >>#1<< captura 2 >>#2<< captura 747 >>#747<<"
+      pStr := "captura 1 >>#1<< captura 2 >>#2<< captura 747 >>#747<<"
     #+END_SRC
 
     para colocar el caracter '#' dentro de la cadena escape '#' con un '#'
@@ -576,7 +577,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    - =::= :: dos puntos
 
 
-   adicionalmente utilice la sintaxis propia de c para colocar caracteres como
+   adicionalmente utilice la sintaxis propia de go para colocar caracteres como
    nueva linea, tabulador, campana,..., etc. De igual forma puede utilizar la
    sintaxis c para "colocar" caracteres en notacion octal, hexadecimal o
    unicode.
