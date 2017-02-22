@@ -240,9 +240,8 @@ func cutPair( rexp, track *reStruct, kind uint8 ){
 }
 
 func walkPair( str string, pair [2]rune ) int {
-  deep := 0
-  for i, c := range str {
-    switch c {
+ for i, deep := 0, 0; walkMeta( str[i:], &i ) < len( str ); i++ {
+   switch rune(str[ i ]) {
     case pair[0] : deep++
     case pair[1] : deep--
     }

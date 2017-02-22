@@ -1,439 +1,433 @@
 #+TITLE:    Recursive Regexp Raptor (regexp3)
 #+AUTHOR:   nasciiboy
-#+LANGUAGE: es
+#+LANGUAGE: en
 #+STARTUP:  showall
 
-regexp3 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor][aqui]]
-regexp4 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][aqui]]
+regexp3 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor][here]]
+regexp4 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][here]]
 
-raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
+lang: [[file:readme_es.org][es]]
 
-* Caracteristicas
+raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][here]]
 
-  - Manejo sencillo,
+* Characteristics
 
-  - Sin verificacion de errores.
+  - Easy to use.
 
-  - Solo expresiones regulares
+  - No error checking.
 
-  - El codigo mas compacto y claro que alla precenciado nunca antes
-    alguna libreria regexp humana.
+  - only regexp
 
-  - Cero dependencias. Ni la libreria estandar de GO esta precente *GO PURO*.
+  - Zero dependencies. Neither the standard GO library is present *PURE* GO.
 
-  - Conteo de coincidencias
+  - Count matches
 
-  - Capturas
+  - Catchs
 
-  - Reemplazo de capturas
+  - Replacement catch
 
-  - Colocacion de capturas especificas dentro de un arreglo
+  - Placement of specific catches within an array
 
-  - Referencia dentro de la exprecion a capturas previas
+  - Denial of expressions (experimental)
 
-  - Negacion de expreciones (experimental)
+  - Backreferences
 
-* Introduccion
+* Introduction
 
-  *Recurseve Regexp Raptor* es una libreria de busqueda, captura y reemplazo de
-  expresiones regulares escrita en lenguaje C desce cero. El presente es un port
-  al lenguage de programacion *Go* intentando lograr lo siguiente
+  *Recurseve Regexp Raptor* is a library of search, capture and replacement of
+  regular expressions written in GO language from the C version of regexp3,
+  trying to achieve what following:
 
-  - Contar con la mayoria de caracteristicas presentes en cualquier otra
-    libreria regexp.
+  - Having most of the features present in any other regexp library.
 
-  - Codigo elegante: sencillo, claro y dotado de gracia.
+  - Elegant Code: simple, clear and endowed with grace.
 
-  - Evitar el uso de ninguna libreria externa, incluida la libreria estandar.
+  - Avoid explicit request dynamic memory.
 
-  - Ser util como material de aprendizaje.
+  - Avoid using any external libraries, including the standard library.
 
-** Motivacion
+  - Be a useful learning material.
 
-   El desarrollo original en C, fue fruto de la no existencia de una libreria
-   estandar de expresiones regulares para dicho lenguaje, si bien existen varias
-   implementaciones, como pcre, la libreria regexp.h del proyecto GNU, regexp
-   del sistema operativo Plan 9, y algunas otras mas, el autor de este trabajo
-   (que igual y es un poco retard) encontro en todas codigo rebuscado y mistico
-   repartido en varios ficheros, llenos de macros, guiones bajos y variables
-   cripticas. Incapas de entender nada y tras un retiro a la isla de la
-   meditacion onanista el autor se propuso hacer su propia libreria con casinos
-   y colegialas japonesas.
+** Motivation
 
-   El port al lenguaje de programacion Go surguio de la simple
-   necesidad/curiosidad de aprender un poco mas. De momento es una burda
-   aproximacion con mas de *C* que de *Go*, con chapuzas varias... pero bueno,
-   el repositorio debia tener un inicio, no?
+   The original development in C was due to the non-existence of a standar
+   library of regular expressions for that language, although there are several
+   implementations, such as pcre, the regexp.h library of the GNU project,
+   regexp (Plan 9 OS), and some other more, the author of this work (which is a
+   little retard) found in all, far-fetched and mystical code divided into
+   several files full of macros, scripts low and cryptic variables. Unable to
+   understand anything and after a retreat to the island of onanista meditacion,
+   the author intended to make your own library with casinos and Japanese
+   schoolgirls.
 
-** Desarrollo y pruebas
+** Development and Testing
 
-   Se ha utilizado GNU Emacs (el unico y verdadero sistema operativo), go
-   (1.7.5), konsole y fish, corriendo en Freidora 25.
+   Has been used GNU Emacs (the only true operating system), go 1.7.5, konsole
+   and fish, running in Freidora 25.
 
-   puedes optener una copia del codigo bien clonando el repositorio directamente
+   You can get a copy, clone the repository directly
 
    #+BEGIN_SRC sh
      git clone https://github.com/nasciiboy/regexp3.git ~/go/src/github.com/nasciiboy/regexp3
    #+END_SRC
 
-   o mediante =go get=
+   or through =go get=
 
    #+BEGIN_SRC sh
      go get github.com/nasciiboy/regexp3
    #+END_SRC
 
-   para efectuar las pruebas si estas dentro del repositorio
+   To perform the test (inside the repository)
 
    #+BEGIN_SRC sh
      go test
    #+END_SRC
 
-   o desde cualquier ruta
+   or
 
    #+BEGIN_SRC sh
      go test github.com/nasciiboy/regexp3
    #+END_SRC
 
-* Uso
+* Use
 
-  Para incluir Recursive Regexp Raptor en su codigo solo necesita colocar la
-  linea
+  To include Recursive Regexp Raptor in their code, just need to include the
+  library
 
   #+BEGIN_SRC go
     import "github.com/nasciiboy/regexp3"
   #+END_SRC
 
-  para utilizar la libreria debe crear un objeto de tipo =RE=, asi:
+  To use the library you must create an object of type =RE=, like this:
 
   #+BEGIN_SRC go
     var re regexp3.RE
   #+END_SRC
 
-  las metodos disponibles son
+  The available methods are
 
   #+BEGIN_SRC go
-    // busqueda, retorna numero de coincidencias
+    // search, return number of matches
     re.Match( txt, re string ) uint
 
-    // retorna numero de capturas
+    // return number of catches
     re.TotCatch() uint32
 
-    // retorna una captura por su indice
+    // return a catch by its index
     re.GetCatch( index uint32 ) string
 
-    // Reemplaza el contenido de una captura por rplStr, por su id
-    // regresa la cadena resultante
+    // replaces the contens of a capture with rplStr, by its id
+    // returns the resulting string
     re.RplCatch( rplStr string, id uint32 ) string
 
-    // Crea una cadena con las capturas y texto indicados en pText
-    // regresa la cadena resultante
+    // Create a string with the captions and text indicated in pText
+    // returns the resulting string
     re.PutCatch( pText string ) string
   #+END_SRC
 
-** Metodo =Match()=
+** =Match()=
 
-   Esta es el unico metodo de busqueda, aqui su prototipo:
+   This the only search method, its prototype is:
 
    #+BEGIN_SRC go
      re.Match( txt, re string ) uint
    #+END_SRC
 
-   - txt  :: cadena sobre la que efectuar la busqueda.
+   - txt :: string on which to perform the search
 
-   - re   :: cadena que contiene la expresion regular de busqueda.
+   - re  :: string containing the regular expression search
 
 
-   La funcion regresa el numero de coincidencias =0= (ninguna) o =n=
-   coincidencias.
+   The function returns the number of matches =0= (none) o =n=
+   matches.
 
-   La sintaxis estandar para expresiones regulares utiliza el caracter '=\=',
-   lamentablemente este signo entra en "conflicto" con la sintaxis de Go, por
-   esto e intentando mantener el codigo lo mas sencillo, se ha optado por una
-   sintaxis alterna detallada a continuacion
+   regexp3 opted for a alternate syntax, detailed below
 
-** Sintaxis
+** Syntax
 
-   - busqueda de texto en cualquier ubicacion:
+   - Text search in any location:
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "Raptor" );
+       re.Match( "Raptor Test", "Raptor" )
      #+END_SRC
 
-   - multiples opciones de busqueda "exp1|exp2"
+   - Multiple search options "exp1|exp2"
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "Dinosaur|T Rex|Raptor|Triceratops" );
+       re.Match( "Raptor Test", "Dinosaur|T Rex|Raptor|Triceratops" )
      #+END_SRC
 
-   - coincidencia con cualquier caracter '.'
+   - Matches any character '.'
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "R.ptor" );
+       re.Match( "Raptor Test", "R.ptor" )
      #+END_SRC
 
-   - coincidencia cero o una ves '?'
+   - Zero or one coincidences '?'
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "Ra?ptor" );
+       re.Match( "Raptor Test", "Ra?ptor" )
      #+END_SRC
 
-   - coincidencia una o mas veces '+'
+   - One or more coincidences  '+'
 
      #+BEGIN_SRC go
-       re.Match( "Raaaptor Test", "Ra+ptor" );
+       re.Match( "Raaaptor Test", "Ra+ptor" )
      #+END_SRC
 
-   - coincidencia cero o mas veces '*'
+   - Zero or more coincidences '*'
 
      #+BEGIN_SRC go
-       re.Match( "Raaaptor Test", "Ra*ptor" );
+       re.Match( "Raaaptor Test", "Ra*ptor" )
      #+END_SRC
 
-   - rango de coincidencias "{n1,n2}"
+   - Range of coincidences "{n1,n2}"
 
      #+BEGIN_SRC go
-       re.Match( "Raaaptor Test", "Ra{0,100}ptor" );
+       re.Match( "Raaaptor Test", "Ra{0,100}ptor" )
      #+END_SRC
 
-   - numero de coincidencias especifico '{n1}'
+   - Number of specific matches '{n1}'
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "Ra{1}ptor" );
+       re.Match( "Raptor Test", "Ra{1}ptor" )
      #+END_SRC
 
-   - numero minimo de coincidencias '{n1,}'
+   - Minimum Number of matches '{n1,}'
 
      #+BEGIN_SRC go
-       re.Match( "Raaaptor Test", "Ra{1,}ptor" );
+       re.Match( "Raaaptor Test", "Ra{2,}ptor" )
      #+END_SRC
 
-   - Conjuntos.
+   - Sets.
 
-     - Conjunto de caracteres "[abc]"
+     - Character Set "[abc]"
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "R[uoiea]ptor" );
+         re.Match( "Raptor Test", "R[uoiea]ptor" )
        #+END_SRC
 
-     - Rango dentro de un conjunto de caracteres "[a-b]"
+     - Range within a set of characters "[a-b]"
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "R[a-z]ptor" );
+         re.Match( "Raptor Test", "R[a-z]ptor" )
        #+END_SRC
 
-     - Metacaracter dentro de un conjunto de caracteres "[:meta]"
+     - Metacaracter within a set of characters "[:meta]"
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "R[:w]ptor" );
+         re.Match( "Raptor Test", "R[:w]ptor" )
        #+END_SRC
 
-     - inversion de conjunto de caracteres  "[^abc]"
+     - Investment character set "[^abc]"
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "R[^uoie]ptor" );
+         re.Match( "Raptor Test", "R[^uoie]ptor" )
        #+END_SRC
 
-   - coincidencia con un caracter que sea una letra ":a"
+   - Coinciding with a character that is a letter ":a"
 
      #+BEGIN_SRC go
-       re.Match( "RAptor Test", "R:aptor" );
+       re.Match( "RAptor Test", "R:aptor" )
      #+END_SRC
 
-   - coincidencia con un caracter que no sea una letra ":A"
+   - Coinciding with a character that is not a letter ":A"
 
      #+BEGIN_SRC go
-       re.Match( "R△ptor Test", "R:Aptor" );
+       re.Match( "R△ptor Test", "R:Aptor" )
      #+END_SRC
 
-   - coincidencia con un caracter que sea una numero ":d"
+   - Coinciding with a character that is a number ":d"
 
      #+BEGIN_SRC go
-       re.Match( "R4ptor Test", "R:dptor" );
+       re.Match( "R4ptor Test", "R:dptor" )
      #+END_SRC
 
-   - coincidencia con un caracter que no sea un numero ":D"
+   - Coinciding with a character other than a number ":D"
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "R:Dptor" );
+       re.Match( "Raptor Test", "R:Dptor" )
      #+END_SRC
 
-   - coincidencia con un caracter alfanumerico ":w"
+   - Coinciding with an alphanumeric character ":w"
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "R:wptor" );
+       re.Match( "Raptor Test", "R:wptor" )
      #+END_SRC
 
-   - coincidencia con un caracter no alfanumerico ":W"
+   - Coinciding with a non-alphanumeric character ":W"
 
      #+BEGIN_SRC go
-       re.Match( "R△ptor Test", "R:Wptor" );
+       re.Match( "R△ptor Test", "R:Wptor" )
      #+END_SRC
 
-   - coincidencia con un caracter que sea un espacio ":s"
+   - Coinciding with a character that is a space ":s"
 
      #+BEGIN_SRC go
-       re.Match( "R ptor Test", "R:sptor" );
+       re.Match( "R ptor Test", "R:sptor" )
      #+END_SRC
 
-   - coincidencia con un caracter que no sea un espacio ":S"
+   - Coinciding with a character other than a space ":S"
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "R:Sptor" );
+       re.Match( "Raptor Test", "R:Sptor" )
      #+END_SRC
 
-   - escape de caracteres con significado especial ":caracter"
-
-     los caracteres '|', '(', ')', '<', '>', '[', ']', '?', '+', '*', '{', '}',
-     '-', '#' y '@' indican como debe procesarse la exprecion regular, colocar
-     alguno de estos caracteres tal cual, sin tener en cuenta una correcta
-     sintaxis dentro de la exprecion, puede generar bucles infinitos al igual
-     que errores por acceso a elementos fuera del limite de un =slice=.
+   - Coincidence with utf8 character ":&"
 
      #+BEGIN_SRC go
-       re.Match( ":#()|<>", ":::#:(:):|:<:>" );
+       re.Match( "R△ptor Test", "R:&ptor" )
      #+END_SRC
 
-     los caracteres /especiales/ (exepto el metacarater =:=) pierden su
-     significado detro de un conjunto
+   - Escape character with special meaning ":character"
+
+     the characters '|', '(', ')', '<', '>', '[', ']', '?', '+', '*', '{', '}',
+     '-', '#' and '@' as a especial characters, placing one of these characters
+     as is, regardless one correct syntax within the exprecion, can generate
+     infinite loops and other errors.
 
      #+BEGIN_SRC go
-       re.Match( "()<>[]|{}*#@?+", "[()<>:[:]|{}*?+#@]" );
+       re.Match( ":#()|<>", ":::#:(:):|:<:>" )
      #+END_SRC
 
-   - agrupacion "(exp)"
+     The special characters (except the metacharacter) lose their meaning within
+     a set
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "(Raptor)" );
+       re.Match( "()<>[]|{}*#@?+", "[()<>:[:]|{}*?+#@]" )
      #+END_SRC
 
-   - agrupacion con captura "<exp>"
+   - Grouping "(exp)"
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "<Raptor>" );
+       re.Match( "Raptor Test", "(Raptor)" )
      #+END_SRC
 
-   - backreferences "@id"
+   - Grouping with capture "<exp>"
 
-     las referencias necesitan que previamente se halla capturado una exprecion
-     mediante "<exp>", luego se coloca el numero de aparicion de la captura
-     precidido por '@'
+     #+BEGIN_SRC go
+       re.Match( "Raptor Test", "<Raptor>" )
+     #+END_SRC
+
+   - Backreferences "@id"
+
+     the backreferences need one previously captured expression "<exp>", then the
+     number of capture is placed, preceded by '@'
 
      #+BEGIN_SRC go
        re.Match( "ae_ea", "<a><e>_@2@1" )
      #+END_SRC
 
-   - modificadores de comportamiento
+   - Behavior modifiers
 
-     Existen dos tipos de modificadores. El primero afecta de forma global el
-     comportamiento de la exprecion, el segundo afecta secciones en
-     especifico. En ambos caso los la sintaxis es la misma, el signo '#',
-     seguido por los modificadores,
+     There are two types of modifiers. The first affects globally the exprecion
+     behaviour, the second affects specific sections. In either case, the syntax
+     is the same, the sign '#', followed by modifiers,
 
-     los modificadores de alcance global se coloca al inicio, de toda la
-     exprecion y son los siguientes
+     modifiers global reach is placed at the beginning, the whole
+     and are as follows exprecion
 
-     - busqueda solo al inicio '#^exp'
-
-       #+BEGIN_SRC go
-         re.Match( "Raptor Test", "#^Raptor" );
-       #+END_SRC
-
-     - busqueda solo al final '#$exp'
+     - Search only the beginning '#^exp'
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "#$Test" );
+         re.Match( "Raptor Test", "#^Raptor" )
        #+END_SRC
 
-     - busqueda al inicio y final "#^$exp"
+     - Search only at the end '#$exp'
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "#^$Raptor Test" );
+         re.Match( "Raptor Test", "#$Test" )
        #+END_SRC
 
-     - detener con la primer coincidencia "#?exp"
+     - Search the beginning and end "#^$exp"
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "#?Raptor Test" );
+         re.Match( "Raptor Test", "#^$Raptor Test" )
        #+END_SRC
 
-     - buscar por la cadena caracter a caracter "#~"
-
-       de forma predeterminada cuando una exprecion coincide con una region del
-       texto de busqueda, la busqueda prosigue a partir del final de dicha
-       coincidencia, para ignorar este comportamiento, haciendo que la busqueda
-       siempre sea caracter a caracter se utiliza este modificador
+     - Stop with the first match "#?exp"
 
        #+BEGIN_SRC go
-         re.Match( "aaaaa", "#~a*" );
+         re.Match( "Raptor Test", "#?Raptor Test" )
        #+END_SRC
 
-       en este ejemplo, sin el modificador el resultado seria una coincidencia,
-       sin embargo con este modificador la busqueda continua inmediatamente
-       despues del siguente caracter regresando cinco coincidencias.
+     - Search for the string, character by character "#~"
 
-     - ignorar entre minusculas y mayusculas "#*exp"
+       By default, when a exprecion coincides with a region of
+       text search, the search continues from the end of that
+       coincidence to ignore this behavior, making the search
+       always be character by character this switch is used
 
        #+BEGIN_SRC go
-         re.Match( "Raptor Test", "#*RaPtOr TeSt" );
+         re.Match( "aaaaa", "#~a*" )
+       #+END_SRC
+
+       in this example, without modifying the result it would be a coincidence,
+       however with this switch continuous search immediately after returning
+       character representations of the following five matches.
+
+     - Ignore case sensitive "#*exp"
+
+       #+BEGIN_SRC go
+         re.Match( "Raptor Test", "#*RaPtOr TeSt" )
        #+END_SRC
 
 
-     todos los modificadores anteriores son compatibles entre si es decir podria
-     buscar
+     all of the above switches are compatible with each other ie could
+     search
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "#^$*?~RaPtOr TeSt" );
+       re.Match( "Raptor Test", "#^$*?~RaPtOr TeSt" )
      #+END_SRC
 
-     sin embargo los  modificadores  '~' y '?' pierden sentido debido a la
-     presencia de '^' y/o '$'.
+     however modifiers '~' and '?' lose sense because the presence of '^' and/or
+     '$'.
 
-     una exprecion del tipo:
+     one exprecion type:
 
      #+BEGIN_SRC go
-       re.Match( "Raptor Test", "#$RaPtOr|#$TeSt" );
+       re.Match( "Raptor Test", "#$RaPtOr|#$TeSt" )
      #+END_SRC
 
-     es erronea, el modificador despues del operador '|' se aplicaria a la
-     seccion entre '|' y '#', es decir a una cadena vacia, lo que proboca un
-     retorno incorrecto
+     is erroneous, the modifier after the '|' section would apply between
+     '|' and '#', with a return of wrong
 
-     los modificadores locales se colocan despues del indicador de repeticion
-     (de existir) y afectan la misma region que afectan los indicadores de
-     repeticion, es decir caracteres, conjuntos o agrupaciones.
+     local modifiers are placed after the repeat indicator (if there) and affect
+     the same region affecting indicators repetition, ie characters, sets or
+     groups.
 
-     - ignorar entre minusculas y mayusculas "exp#*"
-
-       #+BEGIN_SRC go
-         re.Match( "Raptor Test", "(RaPtOr)#* TeS#*t" );
-       #+END_SRC
-
-     - no ignorar entre minusculas y mayusculas "exp#/"
+     - Ignore case sensitive "exp#*"
 
        #+BEGIN_SRC go
-         re.Match( "RaPtOr TeSt", "#*(RaPtOr)#/ TES#/T" );
+         re.Match( "Raptor Test", "(RaPtOr)#* TeS#*t" )
        #+END_SRC
 
-     - *negacion de exprecion* "exp#!"
+     - Not ignore case sensitive "exp#/"
 
-       esta poco convencional exprecion permite el equivalente en otras
-       librerias a expreciones tipo
+       #+BEGIN_SRC go
+         re.Match( "RaPtOr TeSt", "#*(RaPtOr)#/ TES#/T" )
+       #+END_SRC
+
+     - *Denial of exprecion* "exp#!"
+
+       this unconventional exprecion allows the equivalent in other libraries to
+       expreciones type
 
        #+BEGIN_SRC go
          xx.*yy
        #+END_SRC
 
-       es decir "xx" seguida por cualquier cosa que no sea "yy", seguida por "yy".
-       En esta sintaxis seria
+       ie "xx" followed by anything other than "yy", followed by "yy".
+       In this syntax serious
 
        #+BEGIN_SRC go
-         re.Match( "xx123456789yy", "xx(yy)*#!yy" );
+         re.Match( "xx123456789yy", "xx(yy)*#!yy" )
        #+END_SRC
 
-** Capturas
+** Captures
 
-   Las capturas se indexan segun el orden de aparicion dentro de la expresion
-   por ejemplo:
+   Catches are indexed according to the order of appearance in the expression
+   for example:
 
    #+BEGIN_EXAMPLE
      <   <   >  | <   <   >   >   >
@@ -442,8 +436,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
                       = 3 =
    #+END_EXAMPLE
 
-   Si la exprecion coincide mas de una ocacion dentro del texto de busqueda el
-   indice, se incrementa segun su aparicion es decir:
+   If the exprecion matches more than one occasion in the search text
+   index is increased according to their appearance that is:
 
    #+BEGIN_EXAMPLE
      <   <   >  | <   >   >   <   <   >  | <   >   >   <   <   >  | <   >   >
@@ -452,29 +446,29 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      coincidencia uno         coincidencia dos         coincidencia tres
    #+END_EXAMPLE
 
-   El metodo =GetCatch= hace una copia de una la captura dentro de =string=,
-   aqui su prototipo:
+   The method =GetCatch= makes a copy of a catch into an string, here
+   its prototype:
 
    #+BEGIN_SRC go
      re.GetCatch( index uint32 ) string
    #+END_SRC
 
-   - index :: indice de la agrupacion (de =1= a =n=).
+   - index :: index of the grouping (=1= to =n=).
 
 
-   la funcion regeresa una cadena con la copia del contenido de la captura. Un
-   indice incorrecto regresara un =string= vacio.
+   function returns string to the capture terminated. An index incorrect
+   return a empty string.
 
-   para optener el numero capturadas dentro de una busqueda, utlice =TotCatch=:
+   to get the number of catches in a search, using =TotCatch=:
 
    #+BEGIN_SRC go
      re.TotCatch() uint32
    #+END_SRC
 
-   que regresa un valor de =0= a =n=.
+   returning a value of =0= a =n=.
 
-   Podria utilzar esta y la anterior funcion para imprimir las capturadas con
-   una funcion como esta:
+   Could use this and the previous function to print all catches with a function
+   like this:
 
    #+BEGIN_SRC go
      func printCatch( re regexp3.RE ){
@@ -484,281 +478,271 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
      }
    #+END_SRC
 
-*** Colocar capturas dentro de una cadena
+*** Place catches in a string
 
     #+BEGIN_SRC go
       re.PutCatch( pStr string ) string
     #+END_SRC
 
-    el argumento =pStr= contiene el texto con el cual formar la nueva cadena
-    (=string=) asi como indicadores de cuales capturas colocar. Para indicar la
-    insercion de una captura coloque el signo '#' seguido del indice de
-    captura. por ejemplo el argumento =pStr= podria ser
+    =pStr= argument contains the text with which to form the new chain as well
+    as indicators which you catch place. To indicate the insertion a capture,
+    place the '#' sign followed the capture index. for example =pStr= argument
+    could be
 
     #+BEGIN_SRC go
-      pStr := "captura 1 >>#1<< captura 2 >>#2<< captura 747 >>#747<<"
+      pStr := "catch 1 >>#1<< catch 2 >>#2<< catch 747 >>#747<<"
     #+END_SRC
 
-    para colocar el caracter '#' dentro de la cadena escape '#' con un '#'
-    adicional, es decir:
+    to place the character '#' within the escape string '#' with '#'
+    further, ie:
 
     #+BEGIN_EXAMPLE
-      "## comentario"  -> "# comentario"
+      "## Comment" -> "# comment"
     #+END_EXAMPLE
 
-*** Reemplazar una captura
+*** Replace a catch
 
-    El reemplazo opera sobre un arreglo de caracteres en el cual se coloca el
-    texto de busqueda modificando una captura especifica por una cadena de
-    texto, el metodo encargado de esta labor es =RplCatch=, su prototipo es:
+    Replacement operates on an array of characters in which is placed the text
+    search modifying a specified catch by a string text, the method in charge of
+    this work is =rplCatch=, its prototype is:
 
     #+BEGIN_SRC go
       re.RplCatch( rplStr string, id uint32 ) string
     #+END_SRC
 
-    - rplStr :: texto de reemplazo para captura.
+    - rplStr :: replacement text capture.
 
-    - id     :: *identificador* de captura segun el orden de aparicion dentro de
-                la exprecion regular. Pasar un indice incorrecto, coloca una
-                copia sin modificacion de la cadena de busqueda sobre el arreglo
-                =newStr=.
+    - id     :: *Capture identifier* after the order of appearance within
+                regular exprecion. Spend a wrong index, puts a unaltered copy of
+                the search string.
 
 
-    en este caso el uso del argumento =id= a diferencia de la funcion =GetCatch=
-    no se refiere a una "captura" en especifico, es decir no importa la cantidad
-    de ocaciones que se ha capturado una exprecion, el identificador indica la
-    *posicion* dentro de la exprecion en si, es decir:
+    in this case the use of the argument =id= unlike method =GetCatch= does not
+    refer to a "catch" in specific, that is no matter how much of occasions that
+    has captured a exprecion, the identifier indicates the *position* within the
+    exprecion itself, ie:
 
     #+BEGIN_EXAMPLE
          <   <   >  | <   <   >   >   >
       id = 1 ==========================
       id     = 2==    = 2 =========
       id                  = 3 =
-      posicion de la captura dentro de la exprecion
+      capturing position within the exprecion
     #+END_EXAMPLE
 
-    la modificacion afecta de este modo
+    The amendment affects so
 
     #+BEGIN_EXAMPLE
       <   <   >  | <   >   >       <   <   >  | <   >   >      <   <   >  | <   >   >
       = 1 ==================       = 1 ==================      = 1 ==================
           = 2==    = 2==               = 2==    = 2==              = 2==    = 2==
-      captura uno                  "..." dos                   "..." tres
+      capture one                  "..." two                   "..." Three
     #+END_EXAMPLE
 
-** Metacaracteres de busqueda
+** Metacharacters search
 
-   - =:d= :: dígito del 0 al 9.
-   - =:D= :: cualquier carácter que no sea un dígito del 0 al 9.
-   - =:a= :: cualquier caracter que sea una letra (a-z,A-Z)
-   - =:A= :: cualquier caracter que no sea una letra
-   - =:w= :: cualquier carácter alfanumérico.
-   - =:W= :: cualquier carácter no alfanumérico.
-   - =:s= :: cualquier caracter de espacio en blanco.
-   - =:S= :: cualquier carácter que no sea un espacio en blanco.
+   - =:d= :: digit from 0 to 9.
+   - =:D= :: any character other than a digit from 0 to 9.
+   - =:a= :: any character is a letter (a-z, A-Z)
+   - =:A= :: any character other than a letter
+   - =:w= :: any alphanumeric character.
+   - =:W= :: any non-alphanumeric character.
+   - =:s= :: any blank space character.
+   - =:S= :: any character other than a blank.
 
-   - =:|= :: barra vertical
-   - =:^= :: acento circunflejo
-   - =:$= :: signo dolar
-   - =:(= :: parentesis izquierdo
-   - =:)= :: parentesis derecho
-   - =:<= :: mayor que
-   - =:>= :: menor que
-   - =:[= :: corchete izquierdo
-   - =:]= :: corchete derecho
-   - =:.= :: punto
-   - =:?= :: interrogacion
-   - =:+= :: mas
-   - =:-= :: menos
-   - =:*= :: asterisco
-   - =:{= :: llave izquierda
-   - =:}= :: llave derecha
-   - =:#= :: modificador
-   - =::= :: dos puntos
+   - =:|= :: Vertical bar
+   - =:^= :: Caret
+   - =:$= :: Dollar sign
+   - =:(= :: Left parenthesis
+   - =:)= :: Right parenthesis
+   - =:<= :: Greater than
+   - =:>= :: Less than
+   - =:[= :: Left bracket
+   - =:]= :: Right bracket
+   - =:.= :: Point
+   - =:?= :: Interrogacion
+   - =:+= :: More
+   - =:-= :: Less
+   - =:*= :: Asterisk
+   - =:{= :: Left key
+   - =:}= :: Right key
+   - =:#= :: Modifier
+   - =::= :: Colons
 
 
-   adicionalmente utilice la sintaxis propia de go para colocar caracteres como
-   nueva linea, tabulador, campana,..., etc. De igual forma puede utilizar la
-   sintaxis c para "colocar" caracteres en notacion octal, hexadecimal o
-   unicode.
+   additionally use the proper c syntax to place characters new line, tab, ...,
+   etc. Similarly you can use the Go syntax for "placing" especial characters.
 
-** algunos ejemplos de uso
+** Examples of use
 
-   El fichero =regexp3_test.go= contiene una amplia variedad de pruebas que son
-   utiles como ejemplos de uso, entre estos se encuentran los siguentes:
+   =regexp3_test.go= file contains a wide variety of tests that are useful as
+   examples of use, these include the next:
 
    #+BEGIN_SRC go
-     re.Match( "07-07-1777", "<0?[1-9]|[12][0-9]|3[01]><[/:-\\]><0?[1-9]|1[012]>@2<[12][0-9]{3}>" );
+     re.Match( "07-07-1777", "<0?[1-9]|[12][0-9]|3[01]><[/:-\\]><0?[1-9]|1[012]>@2<[12][0-9]{3}>" )
    #+END_SRC
 
-   captura una cadena con formato de fecha, de forma separada dia, separador,
-   mes y año. El separador tiene que coincider las dos ocaciones que aparece
+   captures a date format string, separately day, stripper, month and year. The
+   separator has to coincider the two occasions that appears
 
    #+BEGIN_SRC go
-      re.Match( "https://en.wikipedia.org/wiki/Regular_expression", "(https?|ftp):://<[^:s/:<:>]+></[^:s:.:<:>,/]+>*<.>*" );
+      re.Match( "https://en.wikipedia.org/wiki/Regular_expression", "(https?|ftp):://<[^:s/:<:>]+></[^:s:.:<:>,/]+>*<.>*" )
    #+END_SRC
 
-   capturar algo parecido a un enlace web
+   capture something like a web link
 
    #+BEGIN_SRC go
-     re.Match( "<mail>nasciiboy@gmail.com</mail>", "<[_A-Za-z0-9:-]+(:.[_A-Za-z0-9:-]+)*>:@<[A-Za-z0-9]+>:.<[A-Za-z0-9]+><:.[A-Za-z0-9]{2}>*" );
+     re.Match( "<mail>nasciiboy@gmail.com</mail>", "<[_A-Za-z0-9:-]+(:.[_A-Za-z0-9:-]+)*>:@<[A-Za-z0-9]+>:.<[A-Za-z0-9]+><:.[A-Za-z0-9]{2}>*" )
    #+END_SRC
 
-   capturar por secciones (usuario,sitio,dominio) algo parecido a un correo.
+   capture sections (user, site, domain) something like an email.
 
    #+BEGIN_SRC go
-      re.Match( "xx0123yy", "<xx><yy>*#!<yy>" );
+      re.Match( "xx0123yy", "<xx><yy>*#!<yy>" )
    #+END_SRC
 
-   capturar una cadena que contenga "xx", luego captura cualquier cosa que no
-   sea "yy" y finalmente captura nuevamente "yy"
+   capturing a string containing "xx", then captures anything not
+   is "yy" and finally catch again "yy"
 
 * Hacking
-** algoritmo
-*** Diagrama de flujo
-
-    Esta diagrama es una aproximacion del funcionimento del motor, los nombres no
-    se corresponden con los nombres del codigo, para una explicacion completa
-    revisar el [[https://github.com/nasciiboy/raptor-book/][libro]]
+** algorithm
+*** Flow Diagram
 
     #+BEGIN_EXAMPLE
-          ┌──────┐
-          │inicio│
-          └──────┘
+           ┌────┐
+           │init│
+           └────┘
               │◀───────────────────────────────────┐
               ▼                                    │
-      ┌────────────────┐                           │
-      │bucle por cadena│                           │
-      └────────────────┘                           │
+       ┌──────────────┐                            │
+       │loop in string│                            │
+       └──────────────┘                            │
               │                                    │
               ▼                                    │
        ┌─────────────┐  no   ┌─────────────┐       │
-      <│fin de cadena│>────▶<│buscar regexp│>──────┘
-       └─────────────┘       └─────────────┘  no coincide
-              │ si                  │ coincide
+      <│end of string│>────▶<│search regexp│>──────┘
+       └─────────────┘       └─────────────┘ no match
+              │ yes                 │ match
               ▼                     ▼
-      ┌────────────────┐    ┌────────────────┐
-      │informar: no    │    │informar:       │
-      │hay coincidencia│    │hay coincidencia│
-      └────────────────┘    └────────────────┘
+      ┌────────────────┐     ┌─────────────┐
+      │report: no match│     │report: match│
+      └────────────────┘     └─────────────┘
               │                     │
               │◀────────────────────┘
               ▼
             ┌───┐
-            │fin│
+            │end│
             └───┘
     #+END_EXAMPLE
 
-    En esta version de @c(buscar regexp) todos los constructores se optienen por
-    una sola funcion:
+    =search regexp= version one
 
     #+BEGIN_EXAMPLE
-                                                                  ┌───────────────────────────────┐
-      ┏━━━━━━━━━━━━━┓                                             ▼                               │
-      ┃buscar regexp┃                                   ┌───────────────────┐                     │
-      ┗━━━━━━━━━━━━━┛                                   │Optener constructor│                     │
-                                                        └───────────────────┘                     │
-                                                                  │                               │
-                                                                  ▼                               │
-                                                          ┌───────────────┐  no  ┌─────────────┐  │
-                                                         <│hay constructor│>────▶│terminar: la │  │
-                                                          └───────────────┘      │ruta coincide│  │
-                                                                  │ si           └─────────────┘  │
-                                    ┌──────────┬────────┬─────────┼───────────┬──────────┐        │
-                                    ▼          ▼        ▼         ▼           ▼          ▼        │
-                              ┌───────────┐┌────────┐┌─────┐┌────────────┐┌────────┐┌──────────┐  │
-                              │alternacion││conjunto││punto││metacaracter││caracter││agrupacion│  │
-                              └───────────┘└────────┘└─────┘└────────────┘└────────┘└──────────┘  │
-                                    │          │        │         │           │          │        │
-                                    ▼          └────────┴─────────┼───────────┘          └────────┤
-                             ┌──────────────────┐                 │                               │
-                  ┌──────────│ guardar posicion │                 ▼               no              │
-                  │          └──────────────────┘       ┌──────────────────┐   coincide           │
-                  │          ┌──────────────────┐      <│buscar constructor│>─────────┐           │
-                  ▼◀─────────│restaurar posicion│◀──┐   └──────────────────┘          │           │
-           ┌───────────────┐ └──────────────────┘   │             │ coincide          │           │
-           │recorrer rutas │                        │             ▼                   ▼           │
-           └───────────────┘                        │    ┌──────────────────┐ ┌────────────────┐  │
-                  │                                 │    │avanzar por cadena│ │terminar, ruta  │  │
-                  ▼                                 │    └──────────────────┘ │sin coincidencia│  │
-              ┌────────┐   si     ┌─────────────┐   │             │           └────────────────┘  │
-             <│hay ruta│>───────▶<│buscar regexp│>──┘             └───────────────────────────────┘
-              └────────┘          └─────────────┘ no coincide
-                  │ no           coincide │
-                  ▼                       ▼
-      ┌─────────────────────────┐ ┌─────────────┐
-      │terminar sin coincidencia│ │terminar, la │
-      └─────────────────────────┘ │ruta coincide│
-                                  └─────────────┘
+                                                              ┌──────────────────────────────┐
+      ┏━━━━━━━━━━━━━┓                                         ▼                              │
+      ┃search regexp┃                                  ┌───────────┐                         │
+      ┗━━━━━━━━━━━━━┛                                  │get builder│                         │
+                                                       └───────────┘                         │
+                                                              │                              │
+                                                              ▼                              │
+                                                      ┌───────────────┐  no  ┌────────────┐  │
+                                                     <│we have builder│>────▶│finish: the │  │
+                                                      └───────────────┘      │path matches│  │
+                                                              │ yes          └────────────┘  │
+                                    ┌────────┬─────┬──────────┼────────────┬──────────┐      │
+                                    ▼        ▼     ▼          ▼            ▼          ▼      │
+                              ┌───────────┐┌───┐┌─────┐┌─────────────┐┌─────────┐┌────────┐  │
+                              │alternation││set││point││metacharacter││character││grouping│  │
+                              └───────────┘└───┘└─────┘└─────────────┘└─────────┘└────────┘  │
+                                    │        │     │          │            │          │      │
+                                    ▼        └─────┴──────────┼────────────┘          └──────┤
+                           ┌────────────────┐                 │                              │
+                  ┌────────│ save position  │                 ▼                              │
+                  │        └────────────────┘          ┌─────────────┐  no match             │
+                  │        ┌────────────────┐         <│match builder│>──────────┐           │
+                  ▼◀───────│restore position│◀────┐    └─────────────┘           │           │
+           ┌──────────────┐└────────────────┘     │           │ match            │           │
+           │loop in paths │                       │           ▼                  ▼           │
+           └──────────────┘                       │   ┌─────────────────┐ ┌───────────────┐  │
+                  │                               │   │advance in string│ │finish, the    │  │
+                  ▼                               │   └─────────────────┘ │path no matches│  │
+            ┌────────────┐ yes  ┌─────────────┐   │           │           └───────────────┘  │
+           <│we have path│>───▶<│search regexp│>──┘           └──────────────────────────────┘
+            └────────────┘      └─────────────┘ no match
+                  │ no          match │
+                  ▼                   ▼
+      ┌───────────────────────┐ ┌────────────┐
+      │finish, without matches│ │finish, the │
+      └───────────────────────┘ │path matches│
+                                └────────────┘
     #+END_EXAMPLE
 
-    =buscar regexp=: diseño actual
+    =search regexp= version two
 
     #+BEGIN_EXAMPLE
-                    ┌──────────────────┐
-                    │ guardar posicion │                                 ┏━━━━━━━━━━━━━┓
-                    └──────────────────┘                                 ┃buscar regexp┃
-               ┌────────────▶│                                           ┗━━━━━━━━━━━━━┛
-               │             ▼
-               │      ┌───────────────┐
-               │      │recorrer rutas │
-               │      └───────────────┘
-               │             │                         ┌─────────────────────────────────┐
-               │             ▼                         ▼                                 │
-               │         ┌────────┐   si     ┌───────────────────┐                       │
-               │        <│hay ruta│>────────▶│obtener constructor│                       │
-               │         └────────┘          └───────────────────┘                       │
-               │             │ no                      │                                 │
-               │             ▼                         ▼                                 │
-               │ ┌─────────────────────────┐   ┌───────────────┐  no  ┌─────────────┐    │
-               │ │terminar sin coincidencia│  <│hay constructor│>────▶│terminar: la │    │
-               │ └─────────────────────────┘   └───────────────┘      │ruta coincide│    │
-               │                                       │ si           └─────────────┘    │
-               │                    ┌────────┬─────────┼───────────┬──────────┐          │
-               │                    ▼        ▼         ▼           ▼          ▼          │
-      ┌──────────────────┐      ┌────────┐┌─────┐┌────────────┐┌────────┐┌──────────┐    │
-      │restaurar posicion│      │conjunto││punto││metacaracter││caracter││agrupacion│    │
-      └──────────────────┘      └────────┘└─────┘└────────────┘└────────┘└──────────┘    │
-               ▲                    │        │         │           │          │          │
-               │                    └────────┴─────────┼───────────┘          │          │
-               │                                       ▼                      ▼          │
-       ┌────────────────┐    no coincide     ┌──────────────────┐      ┌─────────────┐   │
-       │terminar: ruta  │◀────────┬─────────<│buscar constructor│>  ┌─<│buscar regexp│>  │
-       │sin coincidencia│         │          └──────────────────┘   │  └─────────────┘   │
-       └────────────────┘         │                    │ coincide   │         │          │
-                                  └──────────────────┈┈│┈┈──────────┘         │ coincide │
-                                                       ▼                      │          │
-                                              ┌──────────────────┐            └──────────┤
-                                              │avanzar por cadena│                       │
-                                              └──────────────────┘                       │
-                                                       │                                 │
-                                                       └─────────────────────────────────┘
+                     ┌─────────────┐
+                     │save position│                             ┏━━━━━━━━━━━━━┓
+                     └─────────────┘                             ┃search regexp┃
+              ┌────────────▶│                                    ┗━━━━━━━━━━━━━┛
+              │             ▼
+              │      ┌──────────────┐
+              │      │loop in paths │
+              │      └──────────────┘
+              │             │                       ┌────────────────────────────────┐
+              │             ▼                       ▼                                │
+              │       ┌────────────┐   yes    ┌───────────┐                          │
+              │      <│we have path│>────────▶│get builder│                          │
+              │       └────────────┘          └───────────┘                          │
+              │             │ no                    │                                │
+              │             ▼                       ▼                                │
+              │  ┌───────────────────────┐   ┌───────────────┐ no  ┌─────────────┐   │
+              │  │finish: without matches│  <│we have builder│>───▶│finish: the  │   │
+              │  └───────────────────────┘   └───────────────┘     │path matches │   │
+              │                                     │ yes          └─────────────┘   │
+              │                    ┌─────┬──────────┼────────────┬─────────┐         │
+              │                    ▼     ▼          ▼            ▼         ▼         │
+      ┌────────────────┐        ┌───┐┌─────┐┌─────────────┐┌─────────┐┌────────┐     │
+      │restore position│        │set││point││metacharacter││character││grouping│     │
+      └────────────────┘        └───┘└─────┘└─────────────┘└─────────┘└────────┘     │
+              ▲                    │     │          │            │         │         │
+              │                    └─────┴──────────┼────────────┘         │         │
+              │                                     ▼                      ▼         │
+       ┌───────────────┐      no match       ┌─────────────┐        ┌─────────────┐  │
+       │finish: the    │◀────────┬──────────<│match builder│>  ┌───<│search regexp│> │
+       │path no matches│         │           └─────────────┘   │    └─────────────┘  │
+       └───────────────┘         │                  │ match    │           │         │
+                                 └────────────────┈┈│┈┈────────┘           │ match   │
+                                                    ▼                      │         │
+                                           ┌─────────────────┐             └─────────┤
+                                           │advance in string│                       │
+                                           └─────────────────┘                       │
+                                                    │                                │
+                                                    └────────────────────────────────┘
     #+END_EXAMPLE
 
 * Todo
 
-  Muchas cosas van a cambiar en el corto plazo (otras cuando aprenda a programar
-  orientado a objetos y el resto cuando aprenda a paralelizar cosas)
+  many thing will change in the short term (other when learning to oop and the
+  rest when learning to parallelize things)
 
-  1. Refactorizar
+  1. Refactor
 
-  2. Volver dinamico el numero de capturas
+  2. Number of catches dynamic
 
-  3. Agregar soporte de caracteres utf-8
+  3. Adding utf-8 character support
 
-  4. Pruebas de rendimiento
+  4. Tests of performance
 
-  5. Hacer un poco mas "funcional" algunas funciones
+  5. Make a few functions more "functional"
 
-  6. Paralelizar la busqueda de rutas
+  6. Parallelize the search of routes
 
-* Licencia
+* License
 
-  Este proyecto no es de codigo "abierto", es *software libre*, y acorde a
-  ello se utiliza la licencia GNU GPL Version 3. Cualquier obra que incluya o
-  derive codigo de esta libreria, debera cumplir con los terminos de esta
-  licencia.
+  This project is not "open source" is *free software*, and according to this,
+  use the GNU GPL Version 3. Any work that includes used or resulting code of
+  this library, you must comply with the terms of this license.
 
-* Contacto, contribucion y otras cosas
+* Contact, contribution and other things
 
   [[mailto:nasciiboy@gmail.com]]
