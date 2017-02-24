@@ -13,7 +13,6 @@ func toLower( c rune ) rune {
   return c
 }
 
-
 func strChr( str string, r rune ) int {
   for i, c := range str {
     if c == r { return  i }

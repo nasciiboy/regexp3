@@ -116,6 +116,12 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
     // return a catch by its index
     re.GetCatch( index uint32 ) string
 
+    // return the start position of the catch or 0 (?)
+    re.GpsCatch( index uint32 ) int
+
+    // returns the length of the catth or 0 (?)
+    re.LenCatch( index uint32 ) int
+
     // replaces the contens of a capture with rplStr, by its id
     // returns the resulting string
     re.RplCatch( rplStr string, id uint32 ) string

@@ -7,9 +7,9 @@ const MOD_OMEGA      = 2
 const MOD_LONLEY     = 4
 const MOD_FwrByChar  = 8
 const MOD_COMMUNISM  = 16
-const MOD_CAPITALISM = 0xEF
+const MOD_CAPITALISM = 0xEF // ~16
 const MOD_NEGATIVE   = 128
-const MOD_POSITIVE   = 0x7F
+const MOD_POSITIVE   = 0x7F // ~128
 
 type TEXT struct {
   src string
@@ -70,7 +70,6 @@ func (p *RE) Match( txt, re string ) (result uint) {
     p.text.pos  = 0
     p.text.init = i
     p.text.len  = len(txt[i:])
-
 
     if walker(rexp) {
       if (rexp.mods & MOD_OMEGA) > 0 {
@@ -183,7 +182,7 @@ func tracker( rexp, track *reStruct ) bool {
   return true
 }
 
-func cutSimple( rexp, track *reStruct ) {
+func cutSimple( rexp, track *reStruct ){
   for i, c := range rexp.str {
     switch c {
     case '(', '<', '[', '@', ':', '.':
@@ -296,15 +295,15 @@ func getLoops( rexp, track *reStruct ){
       pos += countCharDigits( rexp.str[pos:] )
 
       if rexp.str[pos] == '}' {
-              track.loopsMax = track.loopsMin;
-              pos += 1
+        track.loopsMax = track.loopsMin;
+        pos += 1
       } else if rexp.str[pos:pos+2] == ",}" {
-              pos += 2
-              track.loopsMax = INF
+        pos += 2
+        track.loopsMax = INF
       } else if rexp.str[pos] == ',' {
-              pos += 1
-              track.loopsMax = aToi( rexp.str[pos:] )
-              pos += countCharDigits( rexp.str[pos:] ) + 1
+        pos += 1
+        track.loopsMax = aToi( rexp.str[pos:] )
+        pos += countCharDigits( rexp.str[pos:] ) + 1
       }
     }
 
@@ -472,9 +471,9 @@ func getCatch( index uint32 ) string {
   return ""
 }
 
-func (p *RE) TotCatch() uint32 { return p.catchIndex - 1 }
+func (p RE) TotCatch() uint32 { return p.catchIndex - 1 }
 
-func (p *RE) GetCatch( index uint32 ) string {
+func (p RE) GetCatch( index uint32 ) string {
   if index > 0 && index < p.catchIndex {
     return p.Txt[ p.catch[index].init : p.catch[index].end ]
   }
@@ -482,50 +481,51 @@ func (p *RE) GetCatch( index uint32 ) string {
   return ""
 }
 
-func (p *RE) RplCatch( rplStr string, id uint32 ) string {
-  var result []byte
+func (p RE) GpsCatch( index uint32 ) int {
+  if index > 0 && index < p.catchIndex {
+    return p.catch[index].init
+  }
+
+  return 0
+}
+
+func (p RE) LenCatch( index uint32 ) int {
+  if index > 0 && index < p.catchIndex {
+    return p.catch[index].end - p.catch[index].init
+  }
+
+  return 0
+}
+
+func (p RE) RplCatch( rplStr string, id uint32 ) (result string) {
   last := 0
 
   for index := uint32(1); index < p.catchIndex; index++ {
     if p.catch[index].id == id {
-       for ; last < p.catch[index].init; last++ {
-          result = append( result, p.Txt[ last ] )
-       }
-
-       for i := 0; i < len( rplStr ); i++ {
-          result = append( result, rplStr[ i ] )
-       }
-
-       last = p.catch[index].end
+      result += p.Txt[last:p.catch[index].init]
+      result += rplStr
+      last    = p.catch[index].end
     }
   }
 
-  for ;last < len(p.Txt); last++ {
-    result = append( result, p.Txt[ last ] )
-  }
+  if last < len(p.Txt) { result += p.Txt[last:] }
 
   return string(result)
 }
 
-func (p *RE) PutCatch( pStr string ) string {
-  var result []byte
-
+func (p RE) PutCatch( pStr string ) (result string) {
   for i := 0; i < len(pStr); {
     if pStr[i] == '#' {
       i++
       if len(pStr[i:]) > 0 && pStr[i] == '#' {
         i++
-        result = append( result, '#' );
+        result += "#"
       } else {
-        num := aToi( pStr[i:] )
-        ary := p.GetCatch( num )
-        for c := 0; c < len(ary); c++ {
-          result = append( result, ary[c] )
-        }
-        i += countCharDigits( pStr[i:] )
+        result += p.GetCatch( aToi( pStr[i:] ) )
+        i      += countCharDigits ( pStr[i:] )
       }
-    } else { result = append( result, pStr[i] ); i++ }
+    } else { result += pStr[i:i+1]; i++ }
   }
 
-  return string(result)
+  return
 }
