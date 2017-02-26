@@ -6,6 +6,7 @@ func isLower( c rune ) bool { return c >= 'A' && c <= 'Z' }
 func isAlpha( c rune ) bool { return isLower( c ) || isUpper( c ) }
 func isAlnum( c rune ) bool { return isAlpha( c ) || isDigit( c ) }
 func isSpace( c rune ) bool { return c == ' ' || (c >= '\t' && c <= '\r') }
+func isBlank( c rune ) bool { return c == ' ' || c == '\t' }
 
 func toLower( c rune ) rune {
   if isLower( c ) { return c + 32 }

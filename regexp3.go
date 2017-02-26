@@ -26,8 +26,8 @@ type CATCH struct {
 }
 
 const MAXCATCH = 16
-var   pCatch *[MAXCATCH]CATCH
-var   Cidx uint32
+var   pCatch  *[MAXCATCH]CATCH
+var   Cidx     uint32
 var   pCindex *uint32
 
 const ( PATH = iota; GROUP; HOOK; SET; BACKREF; META; RANGEAB; POINT; SIMPLE )
@@ -87,7 +87,7 @@ func (p *RE) Match( txt, re string ) (result uint) {
 func walker( rexp reStruct ) bool {
   var track reStruct
   for oTpos, oCindex, oCidx := pText.pos, *pCindex, Cidx;
-      cutPath( &rexp, &track );
+      cutByType( &rexp, &track, PATH );
       pText.pos, *pCindex, Cidx = oTpos, oCindex, oCidx {
     if trekking(&track) { return true }
   }
@@ -162,7 +162,6 @@ func loopGroup( rexp *reStruct ) bool {
   return true
 }
 
-
 func tracker( rexp, track *reStruct ) bool {
   if len( rexp.str ) == 0 { return false }
 
@@ -171,9 +170,9 @@ func tracker( rexp, track *reStruct ) bool {
   case '.': cutByLen ( rexp, track, 1,     POINT   )
   case '@': cutByLen ( rexp, track, 1 +
           countCharDigits( rexp.str[1:] ), BACKREF )
-  case '(': cutPair  ( rexp, track,        GROUP   )
-  case '<': cutPair  ( rexp, track,        HOOK    )
-  case '[': cutPair  ( rexp, track,        SET     )
+  case '(': cutByType( rexp, track,        GROUP   )
+  case '<': cutByType( rexp, track,        HOOK    )
+  case '[': cutByType( rexp, track,        SET     )
   default : cutSimple( rexp, track                 )
   }
 
@@ -204,19 +203,28 @@ func cutByLen( rexp, track *reStruct, length int, kind uint8 ){
   track.kind = kind;
 }
 
-func cutPath( rexp, track *reStruct ) bool {
+func cutByType( rexp, track *reStruct, kind uint8 ) bool {
   if len(rexp.str) == 0 { return false }
 
   *track     = *rexp
-  track.kind = PATH
-  for i := 0; walkMeta( rexp.str[i:], &i ) < len( rexp.str ); i++ {
+  track.kind = kind
+  for i, deep, cut := 0, 0, false; walkMeta( rexp.str[i:], &i ) < len( rexp.str ); i++ {
     switch rexp.str[ i ] {
-    case '<': i += walkPair( rexp.str[i:], [2]rune{ '<', '>' } )
-    case '(': i += walkPair( rexp.str[i:], [2]rune{ '(', ')' } )
-    case '[': i += walkPair( rexp.str[i:], [2]rune{ '[', ']' } )
-    case '|':
-      track.str = rexp.str[:i]
-      rexp.str  = rexp.str[i+1:]
+    case '(', '<': deep++
+    case ')', '>': deep--
+    case '[': i += walkSet( rexp.str[i:] )
+    }
+
+    switch kind {
+    case HOOK, GROUP: cut = deep == 0
+    case SET        : cut = rexp.str[ i ] == ']'
+    case PATH       : cut = rexp.str[ i ] == '|' && deep == 0
+    }
+
+    if cut {
+      track.str = track.str[:i]
+      rexp.str  = rexp.str[i + 1:]
+      if kind != PATH { track.str = track.str[1:] }
       return true
     }
   }
@@ -225,30 +233,12 @@ func cutPath( rexp, track *reStruct ) bool {
   return true
 }
 
-func cutPair( rexp, track *reStruct, kind uint8 ){
-  *track       = *rexp;
-  track.kind   = kind;
-
-  switch kind {
-  case HOOK : track.str = rexp.str[ 1 : walkPair( rexp.str, [2]rune{ '<', '>' } )]
-  case GROUP: track.str = rexp.str[ 1 : walkPair( rexp.str, [2]rune{ '(', ')' } )]
-  case SET  : track.str = rexp.str[ 1 : walkPair( rexp.str, [2]rune{ '[', ']' } )]
+func walkSet( str string ) int {
+  for i := 0; walkMeta( str[i:], &i ) < len( str ); i++ {
+    if str[i] == ']' { return i }
   }
 
-  rexp.str  = rexp.str[len(track.str) + 2:]
-}
-
-func walkPair( str string, pair [2]rune ) int {
- for i, deep := 0, 0; walkMeta( str[i:], &i ) < len( str ); i++ {
-   switch rune(str[ i ]) {
-    case pair[0] : deep++
-    case pair[1] : deep--
-    }
-
-    if deep == 0 { return i }
-  }
-
-  return len(str)
+  return len(str);
 }
 
 func walkMeta( str string, n *int ) int {
@@ -369,6 +359,8 @@ func matchMeta( rexp *reStruct, txt string, forward *int ) bool {
   case 'W' : return !isAlnum( r )
   case 's' : return  isSpace( r )
   case 'S' : return !isSpace( r )
+  case 'b' : return  isBlank( r )
+  case 'B' : return !isBlank( r )
   default  : return txt[0] == rexp.str[1]
   }
 }
