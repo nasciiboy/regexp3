@@ -42,8 +42,6 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
   - Elegant Code: simple, clear and endowed with grace.
 
-  - Avoid explicit request dynamic memory.
-
   - Avoid using any external libraries, including the standard library.
 
   - Be a useful learning material.
@@ -733,15 +731,13 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
   1. Refactor
 
-  2. Number of catches dynamic
+  2. Adding utf-8 character support
 
-  3. Adding utf-8 character support
+  3. Tests of performance
 
-  4. Tests of performance
+  4. Make a few functions more "functional"
 
-  5. Make a few functions more "functional"
-
-  6. Parallelize the search of routes
+  5. Parallelize the search of routes
 
 * License
 

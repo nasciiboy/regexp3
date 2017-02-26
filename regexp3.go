@@ -18,17 +18,16 @@ type TEXT struct {
   pos  int
 }
 
-var pText *TEXT
+var text TEXT
 
 type CATCH struct {
   init, end int
   id  uint32
 }
 
-const MAXCATCH = 16
-var   pCatch  *[MAXCATCH]CATCH
-var   Cidx     uint32
-var   pCindex *uint32
+var Catch  []CATCH
+var Cidx   uint32
+var Cindex uint32
 
 const ( PATH = iota; GROUP; HOOK; SET; BACKREF; META; RANGEAB; POINT; SIMPLE )
 
@@ -41,20 +40,17 @@ type reStruct struct {
 
 type RE struct {
   Txt, Re string
-  result uint
-  text TEXT
-  catch[MAXCATCH] CATCH
-  catchIndex uint32
+  Result  uint
+  catch   []CATCH
 }
 
 func (p *RE) Match( txt, re string ) (result uint) {
   p.Txt, p.Re  = txt, re
   rexp        := reStruct{ p.Re, PATH, 0, 0, 0 }
-  pText        = &p.text
-  p.text.src   = txt
-  pCatch       = &p.catch
-  p.catchIndex = 1
-  pCindex      = &p.catchIndex
+  text         = TEXT{ txt, 0, len(txt), 0 }
+  Catch        = []CATCH{}
+  Catch        = append( Catch, CATCH{ 0, len(txt), 0 } )
+  Cindex       = 1
 
   if len(txt) == 0 || len(rexp.str) == 0 { return 0 }
 
@@ -67,28 +63,35 @@ func (p *RE) Match( txt, re string ) (result uint) {
   for forward, i := 0, 0; i < loops; i += forward {
     forward  = 1
     Cidx     = 1
-    p.text.pos  = 0
-    p.text.init = i
-    p.text.len  = len(txt[i:])
+    text.pos  = 0
+    text.init = i
+    text.len  = len(txt[i:])
 
     if walker(rexp) {
       if (rexp.mods & MOD_OMEGA) > 0 {
-        if p.text.pos == p.text.len {                                return 1
-        } else { p.catchIndex = 1 }
-      } else if (rexp.mods & MOD_LONLEY   ) > 0 {                    return 1
-      } else if (rexp.mods & MOD_FwrByChar) > 0 || p.text.pos == 0 { result++
-      } else {   forward = p.text.pos;                               result++; }
+        if text.pos == text.len                                  { return setData( p, 1 )
+        } else { Cindex = 1 }
+      } else if (rexp.mods & MOD_LONLEY   ) > 0                  { return setData( p, 1 )
+      } else if (rexp.mods & MOD_FwrByChar) > 0 || text.pos == 0 { result++
+      } else {   forward = text.pos;                               result++; }
     }
   }
 
-  return result
+  return setData( p, result )
+}
+
+func setData( p *RE, i uint ) uint {
+  p.Result = i
+  p.catch  = Catch[:Cindex]
+
+  return i
 }
 
 func walker( rexp reStruct ) bool {
   var track reStruct
-  for oTpos, oCindex, oCidx := pText.pos, *pCindex, Cidx;
+  for oTpos, oCindex, oCidx := text.pos, Cindex, Cidx;
       cutByType( &rexp, &track, PATH );
-      pText.pos, *pCindex, Cidx = oTpos, oCindex, oCidx {
+      text.pos, Cindex, Cidx = oTpos, oCindex, oCidx {
     if trekking(&track) { return true }
   }
 
@@ -126,13 +129,13 @@ func looper( rexp *reStruct ) bool {
   var loops uint32 = 0
 
   if (rexp.mods & MOD_NEGATIVE) > 0 {
-    for forward := 0; loops < rexp.loopsMax && (pText.pos < pText.len) && !match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
-      pText.pos += 1;
+    for forward := 0; loops < rexp.loopsMax && (text.pos < text.len) && !match( rexp, text.src[text.init + text.pos:], &forward ); {
+      text.pos += 1;
       loops++;
     }
   } else {
-    for forward := 0; loops < rexp.loopsMax && (pText.pos < pText.len) && match( rexp, pText.src[pText.init + pText.pos:], &forward ); {
-      pText.pos += forward
+    for forward := 0; loops < rexp.loopsMax && (text.pos < text.len) && match( rexp, text.src[text.init + text.pos:], &forward ); {
+      text.pos += forward
       loops++;
     }
   }
@@ -142,16 +145,16 @@ func looper( rexp *reStruct ) bool {
 }
 
 func loopGroup( rexp *reStruct ) bool {
-  loops, textPos := uint32(0), pText.pos;
+  loops, textPos := uint32(0), text.pos;
 
   if (rexp.mods & MOD_NEGATIVE) > 0 {
     for loops < rexp.loopsMax && !walker( *rexp ) {
       textPos++;
-      pText.pos = textPos;
+      text.pos = textPos;
       loops++;
     }
 
-    pText.pos = textPos;
+    text.pos = textPos;
   } else {
     for loops < rexp.loopsMax && walker( *rexp ) {
       loops++;
@@ -378,9 +381,9 @@ func matchSet( rexp reStruct, txt string, forward *int ) bool {
       result = match( &track, txt, forward )
     default:
       if (track.mods & MOD_COMMUNISM)  > 0 {
-        result = findRuneCommunist( track.str, rune(pText.src[ pText.init + pText.pos ] ) )
+        result = findRuneCommunist( track.str, rune(text.src[ text.init + text.pos ] ) )
       } else {
-        result = strnchr( track.str, rune( pText.src[ pText.init + pText.pos ]) )
+        result = strnchr( track.str, rune( text.src[ text.init + text.pos ]) )
       }
     }
 
@@ -431,42 +434,46 @@ func matchBackRef( rexp *reStruct, txt string, forward *int ) bool {
 }
 
 func lastIdCatch( id uint32 ) uint32 {
-  for index := *pCindex - 1; index > 0; index-- {
-    if pCatch[ index ].id == id { return index }
+  for index := Cindex - 1; index > 0; index-- {
+    if Catch[ index ].id == id { return index }
   }
 
-  return MAXCATCH;
+  return uint32(len(Catch));
 }
 
 func openCatch() (index uint32) {
-  if *pCindex < MAXCATCH {
-    index = *pCindex
-    *pCindex++
-    pCatch[index] = CATCH{ pText.init + pText.pos, pText.init + pText.pos, Cidx }
-    Cidx++
-  } else { index = MAXCATCH }
+  index = Cindex
+
+  if int(Cindex) < len(Catch) {
+    Catch[index] = CATCH{ text.init + text.pos, text.init + text.pos, Cidx }
+  } else {
+    Catch = append( Catch, CATCH{ text.init + text.pos, text.init + text.pos, Cidx } )
+  }
+
+  Cindex++
+  Cidx++
 
   return index
 }
 
 func closeCatch( index uint32 ){
-  if index < MAXCATCH {
-    pCatch[index].end = pText.init + pText.pos;
+  if index < Cindex {
+    Catch[index].end = text.init + text.pos;
   }
 }
 
 func getCatch( index uint32 ) string {
-  if index > 0 && index < *pCindex {
-    return pText.src[ pCatch[index].init : pCatch[index].end ]
+  if index > 0 && index < Cindex {
+    return text.src[ Catch[index].init : Catch[index].end ]
   }
 
   return ""
 }
 
-func (p RE) TotCatch() uint32 { return p.catchIndex - 1 }
+func (p RE) TotCatch() uint32 { return uint32(len(p.catch)) - 1 }
 
 func (p RE) GetCatch( index uint32 ) string {
-  if index > 0 && index < p.catchIndex {
+  if index > 0 && int(index) < len(p.catch) {
     return p.Txt[ p.catch[index].init : p.catch[index].end ]
   }
 
@@ -474,7 +481,7 @@ func (p RE) GetCatch( index uint32 ) string {
 }
 
 func (p RE) GpsCatch( index uint32 ) int {
-  if index > 0 && index < p.catchIndex {
+  if index > 0 && int(index) < len(p.catch) {
     return p.catch[index].init
   }
 
@@ -482,7 +489,7 @@ func (p RE) GpsCatch( index uint32 ) int {
 }
 
 func (p RE) LenCatch( index uint32 ) int {
-  if index > 0 && index < p.catchIndex {
+  if index > 0 && int(index) < len(p.catch) {
     return p.catch[index].end - p.catch[index].init
   }
 
@@ -492,7 +499,7 @@ func (p RE) LenCatch( index uint32 ) int {
 func (p RE) RplCatch( rplStr string, id uint32 ) (result string) {
   last := 0
 
-  for index := uint32(1); index < p.catchIndex; index++ {
+  for index := 1; index < len(p.catch); index++ {
     if p.catch[index].id == id {
       result += p.Txt[last:p.catch[index].init]
       result += rplStr

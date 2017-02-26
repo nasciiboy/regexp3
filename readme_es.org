@@ -747,15 +747,13 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   1. Refactorizar
 
-  2. Volver dinamico el numero de capturas
+  2. Agregar soporte de caracteres utf-8
 
-  3. Agregar soporte de caracteres utf-8
+  3. Pruebas de rendimiento
 
-  4. Pruebas de rendimiento
+  4. Hacer un poco mas "funcional" algunas funciones
 
-  5. Hacer un poco mas "funcional" algunas funciones
-
-  6. Paralelizar la busqueda de rutas
+  5. Paralelizar la busqueda de rutas
 
 * Licencia
 
