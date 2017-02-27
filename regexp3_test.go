@@ -21,6 +21,7 @@ func TestRegexp3(t *testing.T) {
   dTest( t )
   sTest( t )
   pTest( t )
+  gTest( t )
 }
 
 func nTest( t *testing.T ){
@@ -1096,8 +1097,7 @@ func cTest( t *testing.T ){
     re.Match( c.txt, c.re )
     catch := re.GetCatch( c.n )
     if catch != c.catch {
-      t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "GetCatch( %d ) == %s, expected %s",
+      t.Errorf( "Regexp3( \"%s\", \"%s\" )\nGetCatch( %d ) == %s, expected %s",
                 c.txt, c.re, c.n, catch, c.catch )
     }
   }
@@ -1224,7 +1224,7 @@ func dTest( t *testing.T ){
     { "ABCDEFGHIJKLMNOPQRSTUVWXYZ_`^][abcdefghijklmnopqrstuvwxy", "<:S>", 56 },
     { "ABCDEFGHIJKLMNOPQRSTUVWXYZ_`^][abcdefghijklmnopqrstuvwxyz", "<:S>", 57 },
 
-    { "ABCDEFGHIJKLMNOPQRSTUVWXYZ_`^][abcdefghijklmnopqrstuvwxyz", "<:S>", 57 },
+    { "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", "<:S>", 1024 },
 
     { "A", "#$<.{5}>", 0 },
     { "AB", "#$<.{5}>", 0 },
@@ -1373,8 +1373,7 @@ func sTest( t *testing.T ){
     re.Match( c.txt, c.re )
     swap := re.RplCatch( c.swap, c.n )
     if swap != c.expected {
-      t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "RplCatch( %s, %d ) == %s, expected %s",
+      t.Errorf( "Regexp3( \"%s\", \"%s\" )\nRplCatch( %s, %d ) == %s, expected %s",
                 c.txt, c.re, c.swap, c.n, swap, c.swap )
     }
   }
@@ -1438,9 +1437,42 @@ func pTest( t *testing.T ){
     re.Match( c.txt, c.re )
     put := re.PutCatch( c.put )
     if put != c.expected {
-      t.Errorf( "Regexp3( \"%s\", \"%s\" )\n",
-                "PutCatch( %s ) == %s, expected %s",
+      t.Errorf( "Regexp3( \"%s\", \"%s\" )\nPutCatch( %s ) == %s, expected %s",
                 c.txt, c.re, c.put, put, c.expected )
+    }
+  }
+}
+
+func gTest( t *testing.T ){
+  putTest := []struct {
+    txt, re string
+    catch uint32
+    pos int
+  }{
+    { "", "<0>", 1, 0 },
+    { "0", "<0>", 1, 0 },
+    { "0123456", "<6>", 1, 6 },
+    { "0123456789", "<9>", 1, 9 },
+    { "0123456789", "<:d>", 1, 0 },
+    { "0123456789", "<:d>", 2, 1 },
+    { "0123456789", "<:d>", 3, 2 },
+    { "0123456789", "<:d>", 4, 3 },
+    { "0123456789", "<:d>", 5, 4 },
+    { "0123456789", "<:d>", 6, 5 },
+    { "0123456789", "<:d>", 7, 6 },
+    { "0123456789", "<9><.?>", 1, 9 },
+    { "0123456789", "<9><.?>", 2, 10 },
+    { "0123456789", "<9><.>?", 2, 10 },
+    { "0123456789", "<9><.>", 2, 0 },
+  }
+
+  var re RE
+  for _, c := range putTest {
+    re.Match( c.txt, c.re )
+    pos := re.GpsCatch( c.catch )
+    if pos != c.pos {
+      t.Errorf( "Regexp3( \"%s\", \"%s\" )\nGpsCatch( %d ) == %d, expected %d",
+                c.txt, c.re, c.catch, pos, c.pos )
     }
   }
 }
