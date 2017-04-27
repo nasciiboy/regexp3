@@ -1,15 +1,15 @@
 package regexp3
 
-const INF = 1073741824 // 2^30
+const inf = 1073741824 // 2^30
 
-const MOD_ALPHA      = 1
-const MOD_OMEGA      = 2
-const MOD_LONLEY     = 4
-const MOD_FwrByChar  = 8
-const MOD_COMMUNISM  = 16
-const MOD_CAPITALISM = 0xEF // ~16
-const MOD_NEGATIVE   = 128
-const MOD_POSITIVE   = 0x7F // ~128
+const modAlpha      = 1
+const modOmega      = 2
+const modLonley     = 4
+const modFwrbychar  = 8
+const modCommunism  = 16
+const modCapitalism = 0xEF // ~16
+const modNegative   = 128
+const modPositive   = 0x7F // ~128
 
 type TEXT struct {
   src string
@@ -48,8 +48,8 @@ func (p *RE) Match( txt, re string ) (result uint) {
   p.Txt, p.Re  = txt, re
   rexp        := reStruct{ p.Re, PATH, 0, 0, 0 }
   text         = TEXT{ txt, 0, len(txt), 0 }
-  Catch        = []CATCH{}
-  Catch        = append( Catch, CATCH{ 0, len(txt), 0 } )
+  Catch        = make( []CATCH, 8 )
+  Catch[0]     = CATCH{ 0, len(txt), 0 }
   Cindex       = 1
 
   if len(txt) == 0 || len(rexp.str) == 0 { return 0 }
@@ -57,8 +57,8 @@ func (p *RE) Match( txt, re string ) (result uint) {
   getMods( &rexp, &rexp )
 
   var loops int
-  if (rexp.mods & MOD_ALPHA) > 0 { loops = 1
-  } else                         { loops = len(txt) }
+  if (rexp.mods & modAlpha) > 0 { loops = 1
+  } else                        { loops = len(txt) }
 
   for forward, i := 0, 0; i < loops; i += forward {
     forward  = 1
@@ -68,11 +68,11 @@ func (p *RE) Match( txt, re string ) (result uint) {
     text.len  = len(txt[i:])
 
     if walker(rexp) {
-      if (rexp.mods & MOD_OMEGA) > 0 {
-        if text.pos == text.len                                  { return setData( p, 1 )
+      if (rexp.mods & modOmega) > 0 {
+        if text.pos == text.len                                 { return setData( p, 1 )
         } else { Cindex = 1 }
-      } else if (rexp.mods & MOD_LONLEY   ) > 0                  { return setData( p, 1 )
-      } else if (rexp.mods & MOD_FwrByChar) > 0 || text.pos == 0 { result++
+      } else if (rexp.mods & modLonley   ) > 0                  { return setData( p, 1 )
+      } else if (rexp.mods & modFwrbychar) > 0 || text.pos == 0 { result++
       } else {   forward = text.pos;                               result++; }
     }
   }
@@ -111,8 +111,8 @@ func trekking( rexp *reStruct ) bool {
     case SET:
       if track.str[0] == '^' {
         track.str = track.str[1:]
-        if (track.mods & MOD_NEGATIVE) > 0 { track.mods &=  MOD_POSITIVE
-        } else                             { track.mods |=  MOD_NEGATIVE }
+        if (track.mods & modNegative) > 0 { track.mods &=  modPositive
+        } else                            { track.mods |=  modNegative }
       }
       fallthrough
     case BACKREF, META, RANGEAB, POINT, SIMPLE:
@@ -128,7 +128,7 @@ func trekking( rexp *reStruct ) bool {
 func looper( rexp *reStruct ) bool {
   var loops uint32 = 0
 
-  if (rexp.mods & MOD_NEGATIVE) > 0 {
+  if (rexp.mods & modNegative) > 0 {
     for forward := 0; loops < rexp.loopsMax && (text.pos < text.len) && !match( rexp, text.src[text.init + text.pos:], &forward ); {
       text.pos += 1;
       loops++;
@@ -147,7 +147,7 @@ func looper( rexp *reStruct ) bool {
 func loopGroup( rexp *reStruct ) bool {
   loops, textPos := uint32(0), text.pos;
 
-  if (rexp.mods & MOD_NEGATIVE) > 0 {
+  if (rexp.mods & modNegative) > 0 {
     for loops < rexp.loopsMax && !walker( *rexp ) {
       textPos++;
       text.pos = textPos;
@@ -254,18 +254,18 @@ func walkMeta( str string, n *int ) int {
 }
 
 func getMods( rexp, track *reStruct ){
-  track.mods &= MOD_POSITIVE
+  track.mods &= modPositive
 
   if len( rexp.str ) > 0 && rexp.str[ 0 ] == '#' {
-    for i, c := range( rexp.str[1:] ) {
+    for i, c := range rexp.str[1:] {
       switch c {
-      case '^': track.mods |=  MOD_ALPHA
-      case '$': track.mods |=  MOD_OMEGA
-      case '?': track.mods |=  MOD_LONLEY
-      case '~': track.mods |=  MOD_FwrByChar
-      case '*': track.mods |=  MOD_COMMUNISM
-      case '/': track.mods &=  MOD_CAPITALISM
-      case '!': track.mods |=  MOD_NEGATIVE
+      case '^': track.mods |=  modAlpha
+      case '$': track.mods |=  modOmega
+      case '?': track.mods |=  modLonley
+      case '~': track.mods |=  modFwrbychar
+      case '*': track.mods |=  modCommunism
+      case '/': track.mods &=  modCapitalism
+      case '!': track.mods |=  modNegative
       default : rexp.str = rexp.str[i+1:]; return
       }
     }
@@ -281,8 +281,8 @@ func getLoops( rexp, track *reStruct ){
   if len( rexp.str ) > 0 {
     switch rexp.str[0] {
     case '?' : pos = 1; track.loopsMin = 0; track.loopsMax =   1;
-    case '+' : pos = 1; track.loopsMin = 1; track.loopsMax = INF;
-    case '*' : pos = 1; track.loopsMin = 0; track.loopsMax = INF;
+    case '+' : pos = 1; track.loopsMin = 1; track.loopsMax = inf;
+    case '*' : pos = 1; track.loopsMin = 0; track.loopsMax = inf;
     case '{' : pos = 1
       track.loopsMin = aToi( rexp.str[pos:] )
       pos += countCharDigits( rexp.str[pos:] )
@@ -292,7 +292,7 @@ func getLoops( rexp, track *reStruct ){
         pos += 1
       } else if rexp.str[pos:pos+2] == ",}" {
         pos += 2
-        track.loopsMax = INF
+        track.loopsMax = inf
       } else if rexp.str[pos] == ',' {
         pos += 1
         track.loopsMax = aToi( rexp.str[pos:] )
@@ -329,7 +329,7 @@ func matchText( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < *forward { return false }
 
 
-  if (rexp.mods & MOD_COMMUNISM) > 0 {
+  if (rexp.mods & modCommunism) > 0 {
     return strnEqlCommunist( txt, rexp.str, *forward )
   } else {
     return txt[:*forward] == rexp.str
@@ -340,7 +340,7 @@ func matchRange( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < 1 { return false }
 
   *forward = 1
-  if (rexp.mods & MOD_COMMUNISM) > 0 {
+  if (rexp.mods & modCommunism) > 0 {
     chr := toLower( rune(txt[0]) )
     return chr >= toLower( rune(rexp.str[ 0 ]) ) && chr <= toLower( rune(rexp.str[ 2 ]) )
   }
@@ -380,7 +380,7 @@ func matchSet( rexp reStruct, txt string, forward *int ) bool {
     case RANGEAB,  META:
       result = match( &track, txt, forward )
     default:
-      if (track.mods & MOD_COMMUNISM)  > 0 {
+      if (track.mods & modCommunism)  > 0 {
         result = findRuneCommunist( track.str, rune(text.src[ text.init + text.pos ] ) )
       } else {
         result = strnchr( track.str, rune( text.src[ text.init + text.pos ]) )
