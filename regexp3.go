@@ -13,7 +13,7 @@ const (
   modPositive   uint8 = ^modNegative
 )
 
-const ( rePath uint8 = iota; reGroup; reHook; reSet; reBackref; reMeta; reRangeab; rePoint; reSimple )
+const ( rePath uint8 = iota; reGroup; reHook; reSet; reBackref; reMeta; reRangeab; reUTF8; rePoint; reSimple )
 
 type reStruct struct {
   str                string
@@ -46,7 +46,7 @@ func (r *RE) MatchBool( txt, re string ) bool {
 }
 
 func (r *RE) Match( txt, re string ) int {
-  rexp, loops := reStruct{ str: re, reType: rePath }, 0
+  rexp, loops := reStruct{ str: re, reType: rePath }, len(txt)
   r.txt, r.re  = txt, re
   r.result     = 0
   r.catches    = make( []catchInfo, 8 )
@@ -56,11 +56,10 @@ func (r *RE) Match( txt, re string ) int {
 
   getMods( &rexp, &rexp )
 
-  if (rexp.mods & modAlpha) > 0 { loops = 1
-  } else                        { loops = len(txt) }
+  if (rexp.mods & modAlpha) > 0 { loops = 1 }
 
   for forward, i := 0, 0; i < loops; i += forward {
-    forward, r.catchIdIndex       = 1, 1
+    forward, r.catchIdIndex       = utf8meter( txt[i:] ), 1
     r.txtPos, r.txtInit, r.txtLen = 0, i, len( txt[i:] )
 
     if r.walker( rexp ) {
@@ -104,8 +103,7 @@ func (r *RE) trekking( rexp *reStruct ) bool {
         } else                            { track.mods |=  modNegative }
       }
       fallthrough
-    case reBackref, reMeta, reRangeab, rePoint, reSimple:
-      result = r.looper( &track )
+    default: result = r.looper( &track ) // case reBackref, reMeta, reRangeab, reUTF8, rePoint, reSimple:
     }
 
     if result == false { return false }
@@ -119,7 +117,7 @@ func (r *RE) looper( rexp *reStruct ) bool {
 
   if (rexp.mods & modNegative) > 0 {
     for forward := 0; loops < rexp.loopsMax && r.txtPos < r.txtLen && !r.match( rexp, r.txt[r.txtInit + r.txtPos:], &forward ); {
-      r.txtPos += 1;
+      r.txtPos += utf8meter( r.txt[r.txtInit + r.txtPos:] )
       loops++;
     }
   } else {
@@ -157,15 +155,19 @@ func (r *RE) loopGroup( rexp *reStruct ) bool {
 func tracker( rexp, track *reStruct ) bool {
   if len( rexp.str ) == 0 { return false }
 
-  switch rexp.str[0] {
-  case ':': cutByLen ( rexp, track, 2,     reMeta    )
-  case '.': cutByLen ( rexp, track, 1,     rePoint   )
-  case '@': cutByLen ( rexp, track, 1 +
-          countCharDigits( rexp.str[1:] ), reBackref )
-  case '(': cutByType( rexp, track,        reGroup   )
-  case '<': cutByType( rexp, track,        reHook    )
-  case '[': cutByType( rexp, track,        reSet     )
-  default : cutSimple( rexp, track                   )
+  if rexp.str[0] > 127 {
+    cutByLen( rexp, track, utf8meter( rexp.str ), reUTF8 )
+  } else {
+    switch rexp.str[0] {
+    case ':': cutByLen ( rexp, track, 2,     reMeta    )
+    case '.': cutByLen ( rexp, track, 1,     rePoint   )
+    case '@': cutByLen ( rexp, track, 1 +
+            countCharDigits( rexp.str[1:] ), reBackref )
+    case '(': cutByType( rexp, track,        reGroup   )
+    case '<': cutByType( rexp, track,        reHook    )
+    case '[': cutByType( rexp, track,        reSet     )
+    default : cutSimple( rexp, track                   )
+    }
   }
 
   getLoops( rexp, track );
@@ -175,13 +177,17 @@ func tracker( rexp, track *reStruct ) bool {
 
 func cutSimple( rexp, track *reStruct ){
   for i, c := range rexp.str {
-    switch c {
-    case '(', '<', '[', '@', ':', '.':
+    if rexp.str[i] > 127 {
       cutByLen( rexp, track, i, reSimple  ); return
-    case '?', '+', '*', '{', '#':
-      if i == 1 { cutByLen( rexp, track,     1, reSimple  )
-      } else    { cutByLen( rexp, track, i - 1, reSimple  ) }
-      return
+    } else {
+      switch c {
+      case '(', '<', '[', '@', ':', '.':
+        cutByLen( rexp, track, i, reSimple  ); return
+      case '?', '+', '*', '{', '#':
+        if i == 1 { cutByLen( rexp, track,     1, reSimple  )
+        } else    { cutByLen( rexp, track, i - 1, reSimple  ) }
+        return
+      }
     }
   }
 
@@ -295,19 +301,13 @@ func getLoops( rexp, track *reStruct ){
 
 func (r *RE) match( rexp *reStruct, txt string, forward *int ) bool {
   switch rexp.reType {
-  case rePoint  : return matchPoint    (        txt, forward )
+  case rePoint  : *forward = utf8meter( txt );  return true
   case reSet    : return r.matchSet    ( *rexp, txt, forward )
   case reBackref: return r.matchBackRef(  rexp, txt, forward )
   case reRangeab: return matchRange    (  rexp, txt, forward )
   case reMeta   : return matchMeta     (  rexp, txt, forward )
   default       : return matchText     (  rexp, txt, forward )
   }
-}
-
-func matchPoint( txt string, forward *int ) bool {
-  *forward = 1
-  if len(txt) < 1 { return false }
-  return true
 }
 
 func matchText( rexp *reStruct, txt string, forward *int ) bool {
@@ -323,8 +323,6 @@ func matchText( rexp *reStruct, txt string, forward *int ) bool {
 }
 
 func matchRange( rexp *reStruct, txt string, forward *int ) bool {
-  if len(txt) < 1 { return false }
-
   *forward = 1
   if (rexp.mods & modCommunism) > 0 {
     chr := toLower( rune(txt[0]) )
@@ -335,35 +333,39 @@ func matchRange( rexp *reStruct, txt string, forward *int ) bool {
 }
 
 func matchMeta( rexp *reStruct, txt string, forward *int ) bool {
-  if len(txt) < 1 { return false }
+  var f func( r rune ) bool
   *forward = 1
 
-  r := rune(txt[0])
   switch rexp.str[1] {
-  case 'a' : return  isAlpha( r )
-  case 'A' : return !isAlpha( r )
-  case 'd' : return  isDigit( r )
-  case 'D' : return !isDigit( r )
-  case 'w' : return  isAlnum( r )
-  case 'W' : return !isAlnum( r )
-  case 's' : return  isSpace( r )
-  case 'S' : return !isSpace( r )
-  case 'b' : return  isBlank( r )
-  case 'B' : return !isBlank( r )
+  case 'a' : return isAlpha( rune(txt[0]) )
+  case 'A' : f = isAlpha
+  case 'd' : return isDigit( rune(txt[0]) )
+  case 'D' : f = isDigit
+  case 'w' : return isAlnum( rune(txt[0]) )
+  case 'W' : f = isAlnum
+  case 's' : return isSpace( rune(txt[0]) )
+  case 'S' : f = isSpace
+  case 'b' : return isBlank( rune(txt[0]) )
+  case 'B' : f = isBlank
+  case '&' : if txt[0] < 128 { return false }
+    *forward = utf8meter( txt )
+    return true
   default  : return txt[0] == rexp.str[1]
   }
+
+  if f( rune(txt[0]) ) { return false }
+  *forward = utf8meter( txt )
+  return true
 }
 
 func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
-  if len(txt) < 1 { return false }
-
   *forward = 1
 
   var result bool
   var track reStruct
   for trackerSet( &rexp, &track ) {
     switch track.reType {
-    case reRangeab,  reMeta:
+    case reRangeab, reUTF8, reMeta:
       result = r.match( &track, txt, forward )
     default:
       if (track.mods & modCommunism)  > 0 {
@@ -382,31 +384,39 @@ func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
 func trackerSet( rexp, track *reStruct ) bool {
   if len( rexp.str ) == 0 { return false }
 
-  if rexp.str[0] == ':' { cutByLen ( rexp, track, 2, reMeta  )
+  if rexp.str[0] > 127 {
+    cutByLen( rexp, track, utf8meter( rexp.str ), reUTF8 )
+  } else if rexp.str[0] == ':' {
+    cutByLen ( rexp, track, 2, reMeta  )
   } else {
     for i := 0; i < len( rexp.str ); i++ {
-      switch rexp.str[i] {
-      case ':': cutByLen( rexp, track, i, reSimple  ); goto setL;
-      case '-':
-        if i == 1 { cutByLen( rexp, track,     3, reRangeab )
-        } else    { cutByLen( rexp, track, i - 1, reSimple  ) }
+      if rexp.str[i] > 127 {
+        cutByLen( rexp, track, i, reSimple  ); goto setLM;
+      } else {
+        switch rexp.str[i] {
+        case ':': cutByLen( rexp, track, i, reSimple  ); goto setLM;
+        case '-':
+          if i == 1 { cutByLen( rexp, track,     3, reRangeab )
+          } else    { cutByLen( rexp, track, i - 1, reSimple  ) }
 
-        goto setL;
+          goto setLM;
+        }
       }
     }
 
     cutByLen( rexp, track, len( rexp.str ), reSimple  );
   }
 
- setL:
+ setLM:
   track.loopsMin, track.loopsMax = 1, 1
+  track.mods &= modPositive
   return true
 }
 
 func (r *RE) matchBackRef( rexp *reStruct, txt string, forward *int ) bool {
   backRefId    := aToi( rexp.str[1:] )
   backRefIndex := r.lastIdCatch( backRefId )
-  strCatch     := r.getCatch( backRefIndex )
+  strCatch     := r.GetCatch( backRefIndex )
   *forward      = len(strCatch)
 
   if strCatch == "" || len( txt ) < *forward || strCatch != txt[:*forward] { return false }
@@ -440,14 +450,6 @@ func (r *RE) closeCatch( index int ){
   if index < r.catchIndex {
     r.catches[index].end = r.txtInit + r.txtPos
   }
-}
-
-func (r *RE) getCatch( index int ) string {
-  if index > 0 && index < r.catchIndex {
-    return r.txt[ r.catches[index].init : r.catches[index].end ]
-  }
-
-  return ""
 }
 
 func (r *RE) Result  () int { return r.result }

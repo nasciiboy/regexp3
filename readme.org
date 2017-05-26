@@ -18,6 +18,8 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
   - only regexp
 
+  - The most compact and clear code in a human regexp library.
+
   - Zero dependencies. Neither the standard GO library is present *PURE* GO.
 
   - Count matches
@@ -31,6 +33,8 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
   - Denial of expressions (experimental)
 
   - Backreferences
+
+  - Basic Support for UTF8
 
 * Introduction
 
@@ -107,6 +111,9 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
   #+BEGIN_SRC go
     // search, return number of matches
     re.Match( txt, re string ) int
+
+    // search, return boolean result
+    re.MatchBool( txt, re string ) bool
 
     // return number of catches
     re.TotCatch() int
@@ -726,18 +733,9 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
 * Todo
 
-  many thing will change in the short term (other when learning to oop and the
-  rest when learning to parallelize things)
+  1. Tests of performance
 
-  1. Refactor
-
-  2. Adding utf-8 character support
-
-  3. Tests of performance
-
-  4. Make a few functions more "functional"
-
-  5. Parallelize the search of routes
+  2. Parallelize the search of routes
 
 * License
 

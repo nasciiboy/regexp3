@@ -34,6 +34,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   - Objeto concurrentemente seguro
 
+  - soporte sencillo para caracteres unicode (UTF-8)
+
 * Introduccion
 
   *Recurseve Regexp Raptor* es una libreria de busqueda, captura y reemplazo de
@@ -113,11 +115,11 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
   las metodos disponibles son
 
   #+BEGIN_SRC go
-    // busqueda, retorna resultado booleano de la busqueda
-    re.MatchBool( txt, re string ) bool
-
     // busqueda, retorna numero de coincidencias
     re.Match( txt, re string ) int
+
+    // busqueda, retorna resultado booleano de la busqueda
+    re.MatchBool( txt, re string ) bool
 
     // retorna numero de capturas
     re.TotCatch() int
@@ -754,18 +756,9 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
 * Todo
 
-  Muchas cosas van a cambiar en el corto plazo (otras cuando aprenda a programar
-  orientado a objetos y el resto cuando aprenda a paralelizar cosas)
+  1. Pruebas de rendimiento
 
-  1. Refactorizar
-
-  2. Agregar soporte de caracteres utf-8
-
-  3. Pruebas de rendimiento
-
-  4. Hacer un poco mas "funcional" algunas funciones
-
-  5. Paralelizar la busqueda de rutas
+  2. Paralelizar la busqueda de rutas
 
 * Licencia
 
