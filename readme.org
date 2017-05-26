@@ -106,23 +106,23 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
   #+BEGIN_SRC go
     // search, return number of matches
-    re.Match( txt, re string ) uint
+    re.Match( txt, re string ) int
 
     // return number of catches
-    re.TotCatch() uint32
+    re.TotCatch() int
 
     // return a catch by its index
-    re.GetCatch( index uint32 ) string
+    re.GetCatch( index int ) string
 
     // return the start position of the catch or 0 (?)
-    re.GpsCatch( index uint32 ) int
+    re.GpsCatch( index int ) int
 
     // returns the length of the catth or 0 (?)
-    re.LenCatch( index uint32 ) int
+    re.LenCatch( index int ) int
 
     // replaces the contens of a capture with rplStr, by its id
     // returns the resulting string
-    re.RplCatch( rplStr string, id uint32 ) string
+    re.RplCatch( rplStr string, id int ) string
 
     // Create a string with the captions and text indicated in pText
     // returns the resulting string
@@ -134,7 +134,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
    This the only search method, its prototype is:
 
    #+BEGIN_SRC go
-     re.Match( txt, re string ) uint
+     re.Match( txt, re string ) int
    #+END_SRC
 
    - txt :: string on which to perform the search
@@ -454,7 +454,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
    its prototype:
 
    #+BEGIN_SRC go
-     re.GetCatch( index uint32 ) string
+     re.GetCatch( index int ) string
    #+END_SRC
 
    - index :: index of the grouping (=1= to =n=).
@@ -466,7 +466,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
    to get the number of catches in a search, using =TotCatch=:
 
    #+BEGIN_SRC go
-     re.TotCatch() uint32
+     re.TotCatch() int
    #+END_SRC
 
    returning a value of =0= a =n=.
@@ -476,7 +476,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
 
    #+BEGIN_SRC go
      func printCatch( re regexp3.RE ){
-       for i := uint32(1); i <= re.TotCatch(); i++ {
+       for i := 1; i <= re.TotCatch(); i++ {
          fmt.Printf( "[%d] >%s<\n", i, re.GetCatch( i ) )
        }
      }
@@ -511,7 +511,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
     this work is =rplCatch=, its prototype is:
 
     #+BEGIN_SRC go
-      re.RplCatch( rplStr string, id uint32 ) string
+      re.RplCatch( rplStr string, id int ) string
     #+END_SRC
 
     - rplStr :: replacement text capture.

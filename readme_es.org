@@ -32,6 +32,8 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
 
   - Negacion de expreciones (experimental)
 
+  - Objeto concurrentemente seguro
+
 * Introduccion
 
   *Recurseve Regexp Raptor* es una libreria de busqueda, captura y reemplazo de
@@ -111,36 +113,42 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
   las metodos disponibles son
 
   #+BEGIN_SRC go
+    // busqueda, retorna resultado booleano de la busqueda
+    re.MatchBool( txt, re string ) bool
+
     // busqueda, retorna numero de coincidencias
-    re.Match( txt, re string ) uint
+    re.Match( txt, re string ) int
 
     // retorna numero de capturas
-    re.TotCatch() uint32
+    re.TotCatch() int
 
     // retorna una captura por su indice
-    re.GetCatch( index uint32 ) string
+    re.GetCatch( index int ) string
 
     // retorna la posicion de inicio de la captura o 0 (?)
-    re.GpsCatch( index uint32 ) int
+    re.GpsCatch( index int ) int
 
     // retorna la longitud de la captura o 0 (?)
-    re.LenCatch( index uint32 ) int
+    re.LenCatch( index int ) int
 
     // Reemplaza el contenido de una captura por rplStr, por su id
     // regresa la cadena resultante
-    re.RplCatch( rplStr string, id uint32 ) string
+    re.RplCatch( rplStr string, id int ) string
 
     // Crea una cadena con las capturas y texto indicados en pText
     // regresa la cadena resultante
     re.PutCatch( pText string ) string
   #+END_SRC
 
+  mencionar, que instancias distintas del objeto =RE= puede ser utilizadas
+  dentro de codigo concurrente
+
 ** Metodo =Match()=
 
    Esta es el unico metodo de busqueda, aqui su prototipo:
 
    #+BEGIN_SRC go
-     re.Match( txt, re string ) uint
+     re.Match( txt, re string ) int
    #+END_SRC
 
    - txt  :: cadena sobre la que efectuar la busqueda.
@@ -155,6 +163,10 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    lamentablemente este signo entra en "conflicto" con la sintaxis de Go, por
    esto e intentando mantener el codigo lo mas sencillo, se ha optado por una
    sintaxis alterna detallada a continuacion
+
+   para facilitar la evaluacion de una busqueda se proporciona un envoltorio
+   para el metodo =Match= con nombre =MatchBool=. Los parametros son identicos,
+   la unica diferencia esta en que devuelve un valor booleano
 
 ** Sintaxis
 
@@ -461,7 +473,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    aqui su prototipo:
 
    #+BEGIN_SRC go
-     re.GetCatch( index uint32 ) string
+     re.GetCatch( index int ) string
    #+END_SRC
 
    - index :: indice de la agrupacion (de =1= a =n=).
@@ -473,17 +485,17 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    para optener el numero capturadas dentro de una busqueda, utilice =TotCatch=:
 
    #+BEGIN_SRC go
-     re.TotCatch() uint32
+     re.TotCatch() int
    #+END_SRC
 
-   que regresa un valor de =0= a =n=.
+   que regresa un valor positivo de =0= a =n=.
 
    Podria utilzar esta y la anterior funcion para imprimir las capturadas con
    una funcion como esta:
 
    #+BEGIN_SRC go
      func printCatch( re regexp3.RE ){
-       for i := uint32(1); i <= re.TotCatch(); i++ {
+       for i := 1; i <= re.TotCatch(); i++ {
          fmt.Printf( "[%d] >%s<\n", i, re.GetCatch( i ) )
        }
      }
@@ -518,7 +530,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     texto, el metodo encargado de esta labor es =RplCatch=, su prototipo es:
 
     #+BEGIN_SRC go
-      re.RplCatch( rplStr string, id uint32 ) string
+      re.RplCatch( rplStr string, id int ) string
     #+END_SRC
 
     - rplStr :: texto de reemplazo para captura.

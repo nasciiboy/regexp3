@@ -50,11 +50,11 @@ func strnEqlCommunist( s, t string, n int ) bool {
   return true;
 }
 
-func aToi( str string ) ( number uint32 ) {
+func aToi( str string ) ( number int ) {
   for _, c := range str {
     if isDigit( c ) == false { return }
 
-    number = 10 * number + ( uint32(c) - '0' )
+    number = 10 * number + ( int(c) - '0' )
   }
 
   return

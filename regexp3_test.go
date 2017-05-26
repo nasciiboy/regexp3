@@ -27,7 +27,7 @@ func TestRegexp3(t *testing.T) {
 func nTest( t *testing.T ){
   numTest := []struct {
     txt, re string
-    n uint
+    n int
   }{
     { "a", "a", 1 },
     { "aa", "aa", 1 },
@@ -959,7 +959,7 @@ func nTest( t *testing.T ){
 func cTest( t *testing.T ){
   catchTest := []struct {
     txt, re string
-    n uint32
+    n int
     catch string
   }{
     { "a", "<a>", 1, "a" },
@@ -1112,7 +1112,7 @@ func cTest( t *testing.T ){
 func dTest( t *testing.T ){
   catchTest := []struct {
     txt, re string
-    n uint32
+    n int
   }{
     { "A", "<.>", 1 },
     { "AB", "<.>", 2 },
@@ -1257,7 +1257,7 @@ func dTest( t *testing.T ){
 func sTest( t *testing.T ){
   swapTest := []struct {
     txt, re string
-    n uint32
+    n int
     swap, expected string
   }{
     { "aaab", "<a>"   , 1, "e", "eeeb" },
@@ -1452,7 +1452,7 @@ func pTest( t *testing.T ){
 func gTest( t *testing.T ){
   putTest := []struct {
     txt, re string
-    catch uint32
+    catch int
     pos int
   }{
     { "", "<0>", 1, 0 },
