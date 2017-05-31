@@ -49,7 +49,7 @@ func (r *RE) Match( txt, re string ) int {
   rexp, loops := reStruct{ str: re, reType: rePath }, len(txt)
   r.txt, r.re  = txt, re
   r.result     = 0
-  r.catches    = make( []catchInfo, 8 )
+  r.catches    = make( []catchInfo, 32 )
   r.catchIndex = 1
 
   if len(txt) == 0 || len(re) == 0 { return 0 }
@@ -177,7 +177,7 @@ func tracker( rexp, track *reStruct ) bool {
 
 func cutSimple( rexp, track *reStruct ){
   for i, c := range rexp.str {
-    if rexp.str[i] > 127 {
+    if c > 127 {
       cutByLen( rexp, track, i, reSimple  ); return
     } else {
       switch c {
