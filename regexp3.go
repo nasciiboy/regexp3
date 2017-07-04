@@ -6,11 +6,11 @@ const (
   modAlpha      uint8 = 1
   modOmega      uint8 = 2
   modLonley     uint8 = 4
-  modFwrbychar  uint8 = 8
+  modFwrByChar  uint8 = 8
   modCommunism  uint8 = 16
   modNegative   uint8 = 128
-  modCapitalism uint8 = ^modCommunism
   modPositive   uint8 = ^modNegative
+  modCapitalism uint8 = ^modCommunism
 )
 
 const ( rePath uint8 = iota; reGroup; reHook; reSet; reBackref; reMeta; reRangeab; reUTF8; rePoint; reSimple )
@@ -67,7 +67,7 @@ func (r *RE) Match( txt, re string ) int {
         if r.txtPos == r.txtLen                                 { r.result = 1; return 1
         } else { r.catchIndex = 1 }
       } else if (rexp.mods & modLonley   ) > 0                  { r.result = 1; return 1
-      } else if (rexp.mods & modFwrbychar) > 0 || r.txtPos == 0 { r.result++
+      } else if (rexp.mods & modFwrByChar) > 0 || r.txtPos == 0 { r.result++
       } else {   forward = r.txtPos;                              r.result++; }
     }
   }
@@ -257,7 +257,7 @@ func getMods( rexp, track *reStruct ){
       case '^': track.mods |= modAlpha
       case '$': track.mods |= modOmega
       case '?': track.mods |= modLonley
-      case '~': track.mods |= modFwrbychar
+      case '~': track.mods |= modFwrByChar
       case '*': track.mods |= modCommunism
       case '/': track.mods &= modCapitalism
       case '!': track.mods |= modNegative

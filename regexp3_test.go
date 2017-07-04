@@ -4,7 +4,7 @@
 //
 // Copyright © 2017 nasciiboy <nasciiboy@gmail.com>.
 // Distributed under the GNU GPL v3 License.
-// See readme.md for details.
+// See readme.org for details.
 //
 
 //
