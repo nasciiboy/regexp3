@@ -39,7 +39,7 @@ type RE struct {
   catchIdIndex int
 }
 
-func (r *RE) MatchBool( txt, re string ) bool {
+func (r *RE) Find( txt, re string ) bool {
   if r.Match( txt, re ) > 0 { return true }
 
   return false

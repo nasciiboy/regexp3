@@ -3,8 +3,7 @@
 #+LANGUAGE: es
 #+STARTUP:  showall
 
-regexp3 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor][aqui]]
-regexp4 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][aqui]]
+regexp3 ([[https://github.com/nasciiboy/RecursiveRegexpRaptor][C-lang]], [[https://github.com/nasciiboy/regexp3][Go-lang]]) and regexp4 ([[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][C-lang]], [[https://github.com/nasciiboy/regexp4][Go-lang]])
 
 lang: [[file:readme.org][en]]
 
@@ -119,7 +118,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     re.Match( txt, re string ) int
 
     // busqueda, retorna resultado booleano de la busqueda
-    re.MatchBool( txt, re string ) bool
+    re.Find ( txt, re string ) bool
 
     // retorna numero de capturas
     re.TotCatch() int
@@ -167,7 +166,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    sintaxis alterna detallada a continuacion
 
    para facilitar la evaluacion de una busqueda se proporciona un envoltorio
-   para el metodo =Match= con nombre =MatchBool=. Los parametros son identicos,
+   para el metodo =Match= con nombre =Find=. Los parametros son identicos,
    la unica diferencia esta en que devuelve un valor booleano
 
 ** Sintaxis

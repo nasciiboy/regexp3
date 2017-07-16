@@ -3,8 +3,7 @@
 #+LANGUAGE: en
 #+STARTUP:  showall
 
-regexp3 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor][here]]
-regexp4 (*C-lang*): [[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][here]]
+regexp3 ([[https://github.com/nasciiboy/RecursiveRegexpRaptor][C-lang]], [[https://github.com/nasciiboy/regexp3][Go-lang]]) and regexp4 ([[https://github.com/nasciiboy/RecursiveRegexpRaptor-4][C-lang]], [[https://github.com/nasciiboy/regexp4][Go-lang]])
 
 lang: [[file:readme_es.org][es]]
 
@@ -113,7 +112,7 @@ raptor-book (draft (spanish)) : [[https://github.com/nasciiboy/raptor-book/][her
     re.Match( txt, re string ) int
 
     // search, return boolean result
-    re.MatchBool( txt, re string ) bool
+    re.Find ( txt, re string ) bool
 
     // return number of catches
     re.TotCatch() int
