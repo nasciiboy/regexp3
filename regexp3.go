@@ -58,9 +58,10 @@ func (r *RE) Match( txt, re string ) int {
 
   if (rexp.mods & modAlpha) > 0 { loops = 1 }
 
-  for forward, i := 0, 0; i < loops; i += forward {
+  for forward, i, ocindex := 0, 0, 0; i < loops; i += forward {
     forward, r.catchIdIndex       = utf8meter( txt[i:] ), 1
     r.txtPos, r.txtInit, r.txtLen = 0, i, len( txt[i:] )
+    ocindex                       = r.catchIndex
 
     if r.walker( rexp ) {
       if (rexp.mods & modOmega) > 0 {
@@ -69,7 +70,7 @@ func (r *RE) Match( txt, re string ) int {
       } else if (rexp.mods & modLonley   ) > 0                  { r.result = 1; return 1
       } else if (rexp.mods & modFwrByChar) > 0 || r.txtPos == 0 { r.result++
       } else {   forward = r.txtPos;                              r.result++; }
-    }
+    } else { r.catchIndex = ocindex }
   }
 
   return r.result
