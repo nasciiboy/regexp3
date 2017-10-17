@@ -30,9 +30,8 @@ type RE struct {
   txt, re      string
   result       int
 
-  txtInit      int
-  txtLen       int
-  txtPos       int
+  end          int
+  pos          int
 
   catches      []catchInfo
   catchIndex   int
@@ -46,30 +45,31 @@ func (r *RE) Find( txt, re string ) bool {
 }
 
 func (r *RE) Match( txt, re string ) int {
-  rexp, loops := reStruct{ str: re, reType: rePath }, len(txt)
+  rexp        := reStruct{ str: re, reType: rePath }
   r.txt, r.re  = txt, re
+  r.end        = len(txt)
   r.result     = 0
   r.catches    = make( []catchInfo, 32 )
   r.catchIndex = 1
 
-  if len(txt) == 0 || len(re) == 0 { return 0 }
+  if r.end == 0 || len(re) == 0 { return 0 }
 
   getMods( &rexp, &rexp )
 
+  loops := r.end
   if (rexp.mods & modAlpha) > 0 { loops = 1 }
 
   for forward, i, ocindex := 0, 0, 0; i < loops; i += forward {
-    forward, r.catchIdIndex       = utf8meter( txt[i:] ), 1
-    r.txtPos, r.txtInit, r.txtLen = 0, i, len( txt[i:] )
-    ocindex                       = r.catchIndex
+    forward, r.catchIdIndex, r.pos = utf8meter( txt[i:] ), 1, i
+    ocindex = r.catchIndex
 
     if r.walker( rexp ) {
       if (rexp.mods & modOmega) > 0 {
-        if r.txtPos == r.txtLen                                 { r.result = 1; return 1
+        if r.pos == r.end                                    { r.result = 1; return 1
         } else { r.catchIndex = 1 }
-      } else if (rexp.mods & modLonley   ) > 0                  { r.result = 1; return 1
-      } else if (rexp.mods & modFwrByChar) > 0 || r.txtPos == 0 { r.result++
-      } else {   forward = r.txtPos;                              r.result++; }
+      } else if (rexp.mods & modLonley   ) > 0               { r.result = 1; return 1
+      } else if (rexp.mods & modFwrByChar) > 0 || r.pos == i { r.result++
+      } else {   forward = r.pos - i;                          r.result++; }
     } else { r.catchIndex = ocindex }
   }
 
@@ -78,9 +78,9 @@ func (r *RE) Match( txt, re string ) int {
 
 func (r *RE) walker( rexp reStruct ) bool {
   var track reStruct
-  for oTextPos, oCatchIndex, oCatchIdIndex := r.txtPos, r.catchIndex, r.catchIdIndex;
+  for oPos, oCatchIndex, oCatchIdIndex := r.pos, r.catchIndex, r.catchIdIndex;
       cutByType( &rexp, &track, rePath );
-      r.txtPos, r.catchIndex, r.catchIdIndex = oTextPos, oCatchIndex, oCatchIdIndex {
+      r.pos, r.catchIndex, r.catchIdIndex = oPos, oCatchIndex, oCatchIdIndex {
     if r.trekking( &track ) { return true }
   }
 
@@ -99,9 +99,8 @@ func (r *RE) trekking( rexp *reStruct ) bool {
       result  = r.loopGroup( &track )
     case reSet:
       if track.str[0] == '^' {
-        track.str = track.str[1:]
-        if (track.mods & modNegative) > 0 { track.mods &=  modPositive
-        } else                            { track.mods |=  modNegative }
+        track.str   = track.str[1:]
+        track.mods |=  modNegative
       }
       fallthrough
     default: result = r.looper( &track ) // case reBackref, reMeta, reRangeab, reUTF8, rePoint, reSimple:
@@ -115,17 +114,9 @@ func (r *RE) trekking( rexp *reStruct ) bool {
 
 func (r *RE) looper( rexp *reStruct ) bool {
   loops := 0
-
-  if (rexp.mods & modNegative) > 0 {
-    for forward := 0; loops < rexp.loopsMax && r.txtPos < r.txtLen && !r.match( rexp, r.txt[r.txtInit + r.txtPos:], &forward ); {
-      r.txtPos += utf8meter( r.txt[r.txtInit + r.txtPos:] )
-      loops++;
-    }
-  } else {
-    for forward := 0; loops < rexp.loopsMax && r.txtPos < r.txtLen &&  r.match( rexp, r.txt[r.txtInit + r.txtPos:], &forward ); {
-      r.txtPos += forward
-      loops++;
-    }
+  for forward := 0; loops < rexp.loopsMax && r.pos < r.end &&  r.match( rexp, r.txt[r.pos:], &forward ); {
+    r.pos += forward
+    loops++;
   }
 
   if loops < rexp.loopsMin { return false }
@@ -133,20 +124,9 @@ func (r *RE) looper( rexp *reStruct ) bool {
 }
 
 func (r *RE) loopGroup( rexp *reStruct ) bool {
-  loops, textxtPos := 0, r.txtPos;
-
-  if (rexp.mods & modNegative) > 0 {
-    for loops < rexp.loopsMax && !r.walker( *rexp ) {
-      textxtPos++;
-      r.txtPos = textxtPos;
-      loops++;
-    }
-
-    r.txtPos = textxtPos;
-  } else {
-    for loops < rexp.loopsMax && r.walker( *rexp ) {
-      loops++;
-    }
+  loops := 0
+  for loops < rexp.loopsMax && r.walker( *rexp ) {
+    loops++;
   }
 
   if loops < rexp.loopsMin { return false  }
@@ -250,8 +230,6 @@ func walkMeta( str string, n *int ) int {
 }
 
 func getMods( rexp, track *reStruct ){
-  track.mods &= modPositive
-
   if len( rexp.str ) > 0 && rexp.str[ 0 ] == '#' {
     for i, c := range rexp.str[1:] {
       switch c {
@@ -261,7 +239,6 @@ func getMods( rexp, track *reStruct ){
       case '~': track.mods |= modFwrByChar
       case '*': track.mods |= modCommunism
       case '/': track.mods &= modCapitalism
-      case '!': track.mods |= modNegative
       default : rexp.str    = rexp.str[i+1:]; return
       }
     }
@@ -361,6 +338,7 @@ func matchMeta( rexp *reStruct, txt string, forward *int ) bool {
 
 func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
   *forward = 1
+  reverse := (rexp.mods & modNegative) > 0
 
   var result bool
   var track reStruct
@@ -376,9 +354,16 @@ func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
       }
     }
 
-    if result { return true }
+    if result {
+      if reverse { return false }
+      return true
+    }
   }
 
+  if reverse {
+    *forward = utf8meter( txt )
+    return true
+  }
   return false
 }
 
@@ -437,9 +422,9 @@ func (r *RE) openCatch() (index int) {
   index = r.catchIndex
 
   if r.catchIndex < len(r.catches) {
-    r.catches[index] = catchInfo{ r.txtInit + r.txtPos, r.txtInit + r.txtPos, r.catchIdIndex }
+    r.catches[index] = catchInfo{ r.pos, r.pos, r.catchIdIndex }
   } else {
-    r.catches = append( r.catches, catchInfo{ r.txtInit + r.txtPos, r.txtInit + r.txtPos, r.catchIdIndex } )
+    r.catches = append( r.catches, catchInfo{ r.pos, r.pos, r.catchIdIndex } )
   }
 
   r.catchIndex++
@@ -449,7 +434,7 @@ func (r *RE) openCatch() (index int) {
 
 func (r *RE) closeCatch( index int ){
   if index < r.catchIndex {
-    r.catches[index].end = r.txtInit + r.txtPos
+    r.catches[index].end = r.pos
   }
 }
 
@@ -485,7 +470,7 @@ func (r *RE) RplCatch( rplStr string, id int ) (result string) {
 
   if last < len(r.txt) { result += r.txt[last:] }
 
-  return string(result)
+  return result
 }
 
 func (r *RE) PutCatch( pStr string ) (result string) {
