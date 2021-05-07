@@ -347,7 +347,7 @@ func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
     case reRangeab, reUTF8, reMeta:
       result = r.match( &track, txt, forward )
     default:
-      if (track.mods & modCommunism)  > 0 {
+      if (track.mods & modCommunism) > 0 {
         result = findRuneCommunist( track.str, rune( txt[ 0 ] ) )
       } else {
         result = strnchr( track.str, rune( txt[ 0 ] ) )
