@@ -22,23 +22,19 @@ type reStruct struct {
   loopsMin, loopsMax int
 }
 
-type catchInfo struct {
-  init, end, id int
-}
+type catchInfo struct { init, end, id int }
 
 type RE struct {
   txt, re      string
   result       int
-
-  end          int
-  pos          int
+  txtPos       int
 
   catches      []catchInfo
   catchIndex   int
   catchIdIndex int
 }
 
-func (r *RE) Find( txt, re string ) bool {
+func (r *RE) MatchBool( txt, re string ) bool {
   if r.Match( txt, re ) > 0 { return true }
 
   return false
@@ -47,29 +43,28 @@ func (r *RE) Find( txt, re string ) bool {
 func (r *RE) Match( txt, re string ) int {
   rexp        := reStruct{ str: re, reType: rePath }
   r.txt, r.re  = txt, re
-  r.end        = len(txt)
   r.result     = 0
   r.catches    = make( []catchInfo, 32 )
   r.catchIndex = 1
 
-  if r.end == 0 || len(re) == 0 { return 0 }
+  if len( r.txt ) == 0 || len(re) == 0 { return 0 }
 
   getMods( &rexp, &rexp )
 
-  loops := r.end
+  loops := len( r.txt )
   if (rexp.mods & modAlpha) > 0 { loops = 1 }
 
   for forward, i, ocindex := 0, 0, 0; i < loops; i += forward {
-    forward, r.catchIdIndex, r.pos = utf8meter( txt[i:] ), 1, i
+    forward, r.catchIdIndex, r.txtPos = utf8meter( txt[i:] ), 1, i
     ocindex = r.catchIndex
 
     if r.walker( rexp ) {
       if (rexp.mods & modOmega) > 0 {
-        if r.pos == r.end                                    { r.result = 1; return 1
+        if r.txtPos == len( r.txt )                             { r.result = 1; return 1
         } else { r.catchIndex = 1 }
-      } else if (rexp.mods & modLonley   ) > 0               { r.result = 1; return 1
-      } else if (rexp.mods & modFwrByChar) > 0 || r.pos == i { r.result++
-      } else {   forward = r.pos - i;                          r.result++; }
+      } else if (rexp.mods & modLonley   ) > 0                  { r.result = 1; return 1
+      } else if (rexp.mods & modFwrByChar) > 0 || r.txtPos == i { r.result++
+      } else {    forward = r.txtPos - i;                         r.result++; }
     } else { r.catchIndex = ocindex }
   }
 
@@ -78,9 +73,9 @@ func (r *RE) Match( txt, re string ) int {
 
 func (r *RE) walker( rexp reStruct ) bool {
   var track reStruct
-  for oPos, oCatchIndex, oCatchIdIndex := r.pos, r.catchIndex, r.catchIdIndex;
+  for oPos, oCatchIndex, oCatchIdIndex := r.txtPos, r.catchIndex, r.catchIdIndex;
       cutByType( &rexp, &track, rePath );
-      r.pos, r.catchIndex, r.catchIdIndex = oPos, oCatchIndex, oCatchIdIndex {
+      r.txtPos, r.catchIndex, r.catchIdIndex = oPos, oCatchIndex, oCatchIdIndex {
     if r.trekking( &track ) { return true }
   }
 
@@ -114,8 +109,8 @@ func (r *RE) trekking( rexp *reStruct ) bool {
 
 func (r *RE) looper( rexp *reStruct ) bool {
   loops := 0
-  for forward := 0; loops < rexp.loopsMax && r.pos < r.end &&  r.match( rexp, r.txt[r.pos:], &forward ); {
-    r.pos += forward
+  for forward := 0; loops < rexp.loopsMax && r.txtPos < len( r.txt ) &&  r.match( rexp, r.txt[r.txtPos:], &forward ); {
+    r.txtPos += forward
     loops++;
   }
 
@@ -282,9 +277,9 @@ func (r *RE) match( rexp *reStruct, txt string, forward *int ) bool {
   case rePoint  : *forward = utf8meter( txt );  return true
   case reSet    : return r.matchSet    ( *rexp, txt, forward )
   case reBackref: return r.matchBackRef(  rexp, txt, forward )
-  case reRangeab: return matchRange    (  rexp, txt, forward )
-  case reMeta   : return matchMeta     (  rexp, txt, forward )
-  default       : return matchText     (  rexp, txt, forward )
+  case reRangeab: return   matchRange  (  rexp, txt, forward )
+  case reMeta   : return   matchMeta   (  rexp, txt, forward )
+  default       : return   matchText   (  rexp, txt, forward )
   }
 }
 
@@ -294,7 +289,10 @@ func matchText( rexp *reStruct, txt string, forward *int ) bool {
   if len(txt) < *forward { return false }
 
   if (rexp.mods & modCommunism) > 0 {
-    return strnEqlCommunist( txt, rexp.str, *forward )
+    for i := 0; i < *forward; i++ {
+      if toLower( rune(rexp.str[ i ]) ) != toLower( rune(txt[i]) ) { return false }
+    }
+    return true
   }
 
   return txt[:*forward] == rexp.str
@@ -348,9 +346,14 @@ func (r *RE) matchSet( rexp reStruct, txt string, forward *int ) bool {
       result = r.match( &track, txt, forward )
     default:
       if (track.mods & modCommunism) > 0 {
-        result = findRuneCommunist( track.str, rune( txt[ 0 ] ) )
+        chr := toLower( rune( txt[0] ) )
+        for _, c := range track.str {
+          if toLower( c ) == chr { result = true; break }
+        }
       } else {
-        result = strnchr( track.str, rune( txt[ 0 ] ) )
+        for _, c := range( track.str ) {
+          if c == rune( txt[ 0 ] ) { result = true; break }
+        }
       }
     }
 
@@ -422,9 +425,9 @@ func (r *RE) openCatch() (index int) {
   index = r.catchIndex
 
   if r.catchIndex < len(r.catches) {
-    r.catches[index] = catchInfo{ r.pos, r.pos, r.catchIdIndex }
+    r.catches[index] = catchInfo{ r.txtPos, r.txtPos, r.catchIdIndex }
   } else {
-    r.catches = append( r.catches, catchInfo{ r.pos, r.pos, r.catchIdIndex } )
+    r.catches = append( r.catches, catchInfo{ r.txtPos, r.txtPos, r.catchIdIndex } )
   }
 
   r.catchIndex++
@@ -434,7 +437,7 @@ func (r *RE) openCatch() (index int) {
 
 func (r *RE) closeCatch( index int ){
   if index < r.catchIndex {
-    r.catches[index].end = r.pos
+    r.catches[index].end = r.txtPos
   }
 }
 

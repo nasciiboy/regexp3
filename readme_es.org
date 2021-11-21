@@ -118,7 +118,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
     re.Match( txt, re string ) int
 
     // busqueda, regresa resultado booleano de la busqueda
-    re.Find ( txt, re string ) bool
+    re.MatchBool ( txt, re string ) bool
 
     // regresa el numero de coincidencias
     re.Result() int
@@ -169,7 +169,7 @@ raptor-book (borrador) : [[https://github.com/nasciiboy/raptor-book/][aqui]]
    sintaxis alterna detallada a continuacion
 
    para facilitar la evaluacion de una busqueda se proporciona un envoltorio
-   para el metodo =Match= con nombre =Find=. Los parametros son identicos,
+   para el metodo =Match= con nombre =MatchBool=. Los parametros son identicos,
    la unica diferencia esta en que devuelve un valor booleano
 
 ** Sintaxis

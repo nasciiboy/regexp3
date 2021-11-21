@@ -14,31 +14,6 @@ func toLower( c rune ) rune {
   return c
 }
 
-func strnchr( str string, v rune ) bool {
-  for _, c := range( str) {
-    if c == v { return true }
-  }
-
-  return false
-}
-
-func findRuneCommunist( str string, chr rune ) bool {
-  chr = toLower( chr )
-  for _, c := range str {
-    if toLower( c ) == chr { return true }
-  }
-
-  return true;
-}
-
-func strnEqlCommunist( s, t string, n int ) bool {
-  for i := 0; i < n; i++ {
-    if toLower( rune(s[i]) ) != toLower( rune(t[i]) ) { return false }
-  }
-
-  return true;
-}
-
 func aToi( str string ) ( number int ) {
   for _, c := range str {
     if isDigit( c ) == false { return }
